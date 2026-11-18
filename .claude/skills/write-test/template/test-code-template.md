@@ -1,6 +1,6 @@
-# 테스트 코드 템플릿
+## 테스트 코드 템플릿
 
-## 통합 테스트
+### 통합 테스트
 
 ```java
 package gravit.qa.{domain}.service;
@@ -60,7 +60,7 @@ class {Target}IntegrationTest {
 }
 ```
 
-## Fixture (정적 팩토리)
+### Fixture (정적 팩토리)
 
 ```java
 package gravit.qa.{domain}.fixture;
