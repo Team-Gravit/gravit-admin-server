@@ -4,7 +4,7 @@ paths:
   - "src/main/java/**/controller/**/*.java"
 ---
 
-# Controller Convention
+## Controller Convention
 
 - `@RestController` + `@RequiredArgsConstructor`를 사용하라
 - 기본 경로는 `@RequestMapping("/api/v1/{리소스}")`으로 설정하라

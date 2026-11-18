@@ -4,7 +4,7 @@ paths:
   - "src/main/java/**/service/**/*.java"
 ---
 
-# Service Convention
+## Service Convention
 
 - `@Service` + `@RequiredArgsConstructor`를 사용하라
 - Service는 단일 도메인 로직만 담당하라. 다른 도메인 Service를 직접 호출하지 마라

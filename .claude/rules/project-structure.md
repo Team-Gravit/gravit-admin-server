@@ -4,7 +4,7 @@ paths:
   - "src/main/java/**/*.java"
 ---
 
-# 프로젝트 구조
+## 프로젝트 구조
 
 ```
 src/main/java/gravit/qa/
@@ -25,7 +25,7 @@ src/main/java/gravit/qa/
 
 자동 실행(run), 증적(evidence), 리뷰 수집(review), 페르소나(persona) 패키지는 QA 흐름 재설계(D13)로 없앴다.
 
-## 도메인 패키지 내부 구조
+### 도메인 패키지 내부 구조
 
 ```
 {domain}/
@@ -57,14 +57,72 @@ src/main/java/gravit/qa/
 - `infrastructure/` - 외부 연동, `service/port/` 구현
 - `config/` - 도메인 전용 설정과 props
 
-## job 도메인 예외
+### job 도메인 예외
 
 `job`은 조건부 원자 갱신(`UPDATE … WHERE status = 'RUNNING' AND locked_by = ?`)과 `SKIP LOCKED`가 핵심이라
 JPA 엔티티 없이 `repository/custom/JobQueueRepository` + `JdbcTemplate`으로만 다룬다. 상태 변경을 JPA로 옮기지 마라.
 
-## 작업 처리기 작성
+### 작업 처리기 작성
 
 - 새 작업 처리는 `JobHandler`를 구현한 빈으로 만든다. 유형당 처리기는 하나다
 - 단계는 `JobType`에 정의된 이름으로 `context.step("NAME", ...)`을 호출한다. 단계 경계마다 취소 요청을 확인한다
 - 재시도해도 소용없는 실패는 `NonRetryableJobException`을 던진다. 그 외 예외는 재시도 대상이다
 - 처리기는 같은 입력으로 다시 실행해도 결과가 같아야 한다. 재시도·회수 때 처리기는 처음부터 다시 불리지만, 끝난 단계(`sprint_step`)와 끝난 단위(`prepare_unit`)는 건너뛴다(`SetupStepRunner`)
+
+### 관리자 서버 모듈 배치 (설계 0단계 구조 이동부터 적용)
+
+근거: `docs/design/ADMIN_SERVER_DESIGN.md` D-2. 구조 이동 PR 전까지는 위의 지금 배치가 맞다.
+기준 패키지는 D-1에서 `gravit.admin`으로 바꾼다(구조 이동 PR과 같은 PR).
+
+```
+gravit/{기준 패키지}/
+├── global/      # 공통 설정, 예외, 시간, 메인 DB 읽기 전용 데이터소스(MainDbConfig, @MainDb)
+├── job/         # 작업 큐 (플랫폼)
+├── auth/        # 관리자 판정 필터, /admin/me 판정 캐시 (지금 security)
+├── adapter/     # 외부 연동: figma, notion, github, openapi, llm, gravit(메인 서버 API와 /api/v1/admin/** 전달 Controller)
+├── qa/          # QA 흐름: sprint, feature, reflection, snapshot, checklist, designReview, autoReview, fixReport
+├── insight/     # 대시보드, 통계
+├── support/     # 신고, 공지, 문의
+├── member/      # 회원
+├── content/     # 학습 콘텐츠, 스테이징
+└── audit/       # 감사 로그
+```
+
+- 모듈 아래 도메인이 하나면 모듈 바로 아래에 `controller/`, `service/` 등을 두고, `qa`처럼 여럿이면 `{module}/{domain}/` 아래에 둔다
+- `observability`, `incident`, `ops`는 기능이 생길 때 만든다. 빈 패키지를 미리 만들지 않는다
+- `adapter/`는 외부로 나가는 연동만 둔다. 예외는 `adapter/gravit`의 `/api/v1/admin/**` 전달 Controller 하나다(설계 D-3 (c))
+
+### 모듈 사이 의존
+
+행이 열을 import할 수 있는가. O 허용, X 금지, △ 아래 조건부. 구조 이동부터 ArchUnit 테스트가 강제한다.
+
+| from \ to | global | job | auth | adapter | qa | insight | support | member | content | audit |
+|---|---|---|---|---|---|---|---|---|---|---|
+| global | - | X | X | X | X | X | X | X | X | X |
+| job | O | - | X | X | X | X | X | X | X | X |
+| auth | O | X | - | X | X | X | X | X | X | X |
+| adapter | O | △1 | X | - | X | X | X | X | X | X |
+| qa | O | O | △2 | O | - | X | X | X | X | X |
+| insight | O | O | △2 | O | X | - | △3 | △3 | △3 | X |
+| support | O | O | △2 | O | X | X | - | X | X | △4 |
+| member | O | O | △2 | O | X | X | X | - | X | △4 |
+| content | O | O | △2 | O | X | X | X | X | - | △4 |
+| audit | O | O | △2 | X | X | X | X | X | X | - |
+
+- △1 `adapter → job`: `job.support.NonRetryableJobException` 하나만
+- △2 `→ auth`: `auth.principal`(LoginAdmin)과 요청 토큰 보관 타입만. 필터, 캐시는 금지
+- △3 `insight → support, member, content`: 각 모듈 `service/*QueryService`의 공개 조회 메서드만. 다른 모듈의 Repository, 테이블 직접 조회는 금지
+- △4 `→ audit`: `audit.service.AuditRecorder` 하나만
+
+### 메인 DB 조회
+
+- 조회 방식 기능만 메인 DB를 읽는다. 구현은 `{module}/repository/custom/*RepositoryImpl`에서 `@MainDb JdbcTemplate`만 쓰고 SQL 상수는 `repository/sql/`에 둔다
+- 메인 테이블에 JPA 엔티티를 만들지 않는다. 메인 DB에 쓰지 않는다(읽기 전용 계정, `default_transaction_read_only`)
+- 메인의 숨은 동작(soft delete 조건, 정렬, 페이지 크기 20, `page < 1` 오류)을 그대로 재현한다. 목록은 설계 6-1
+- 테스트 픽스처 DDL 파일 머리에 출처 메인 마이그레이션 파일과 커밋을 적는다
+
+### 메인 API 호출
+
+- `adapter/gravit` 클라이언트만 쓴다. 받은 관리자 토큰을 `Authorization`에 그대로 붙인다
+- 쓰기 요청(POST, PUT, PATCH, DELETE)은 자동 재시도하지 않는다. 연결 실패는 502 `GRAVIT_5021`, 응답 타임아웃은 504 `GRAVIT_5041`
+- 메인 응답은 상태, `Content-Type`, 본문 바이트를 그대로 돌려준다. 역직렬화 후 다시 직렬화하지 않는다
