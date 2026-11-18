@@ -17,22 +17,22 @@
 
 ## 1. 결정 요약
 
-> 2026-11-18 사용자 결정 반영: D-1 이름, D-4(ii)(iii), D-5 네트워크, D-9 적용 시점, D-10 환경. D-3은 사용자 질문으로 재검토 중이다.
+> 2026-11-18 사용자 결정 반영: D-1 이름, D-3 (c), D-4(ii)(iii), D-5 네트워크, D-9 적용 시점, D-10 환경. 관리자 웹 운영은 prod 메인을 본다(M-2 해소).
 
 | ID | 결정 | 선택안 | 사람 결정 필요 | 되돌리는 방법 |
 |---|---|---|---|---|
-| D-1 | 서비스 정체성 | **확정: 이름 `gravit-admin-server`** (파생 이름은 3-5). 시점은 추천 C: C-1 구조 이동 PR에서 패키지와 앱 이름, C-2 첫 웹 전환 전에 새 도메인을 같은 컨테이너에 별칭으로 추가, C-3 이관을 마친 뒤 점검 시간 한 번에 레포, 이미지, 컨테이너, 배포 경로 | 시점만 예 | C-1 되돌림 PR. C-2 웹 rewrite를 옛 도메인으로 돌리고 별칭 삭제. C-3 옛 디렉터리와 옛 이미지 SHA 태그로 재기동 |
+| D-1 | 서비스 정체성 | **확정: 이름 `gravit-admin-server`** (파생 이름은 3-5). 시점은 추천 C: C-1 구조 이동 PR에서 패키지와 앱 이름, C-2 0단계 웹 변경 전에 새 도메인을 같은 컨테이너에 별칭으로 추가, C-3 이관을 마친 뒤 점검 시간 한 번에 레포, 이미지, 컨테이너, 배포 경로 | 시점만 예 | C-1 되돌림 PR. C-2 웹 rewrite를 옛 도메인으로 돌리고 별칭 삭제. C-3 옛 디렉터리와 옛 이미지 SHA 태그로 재기동 |
 | D-2 | 모듈 구조와 경계 강제 | 단일 Gradle 모듈에서 최상위 패키지를 모듈로 쓴다(global, job, auth, adapter, qa, insight, support, member, content, audit). ArchUnit 테스트로 허용 의존 표를 강제 | 아니오 | ArchUnit 테스트와 테스트 의존성 삭제. 패키지 이동은 되돌림 PR |
-| D-3 | 웹에서 관리자 서버로 가는 경로 | 처음 선택은 (a)(도메인마다 `features/*/api.ts`의 클라이언트를 관리자 서버 전용 인스턴스로 교체). D-10 단일 인스턴스 결정과 5-3 정정(전달 계층은 API 방식 16개에 계속 쓰인다)으로 (c)와 차이가 줄어 재검토 중(5-6) | 예 (재검토) | 그 도메인 `api.ts`의 import를 `apiClient`로 되돌려 웹 재배포(또는 Vercel 직전 배포로 롤백). 메인 코드 삭제 전까지 즉시 가능 |
+| D-3 | 웹에서 관리자 서버로 가는 경로 | **확정: (c).** 0단계에 웹 `apiClient` base를 한 번 관리자 서버(Vercel rewrite `/admin-server/api/v1/admin/:path*`)로 바꾸고, 관리자 서버의 `/api/v1/admin/**` 전달 계층이 아직 옮기지 않은 기능과 API 방식 16개를 메인으로 넘긴다. 도메인 전환은 관리자 서버 배포로 한다(검증 중에는 헤더 조건, 5-7). 처음 선택은 (a)였다(5-4, 5-6) | 아니오 | 도메인 하나: 그 Controller에 헤더 조건을 다시 걸거나 전환 커밋을 revert해 관리자 서버 배포. 전체: 웹 `apiClient` base를 메인으로 되돌려 웹 배포. 둘 다 메인 코드 삭제 전까지 |
 | D-4(i) | 조회 기능의 메인 DB 접근 | 메인 DB 읽기 전용 계정 + 두 번째 데이터소스(JdbcTemplate, 풀 최대 3). GRANT SELECT는 도메인을 옮길 때마다 테이블 단위로 추가 | 아니오 (계정 생성은 운영 작업) | 그 모듈의 조회 구현을 메인 API 호출로 바꾸거나 D-3 롤백. 계정은 REVOKE 후 DROP ROLE |
 | D-4(ii) | 소유 테이블 위치 | **확정: 관리자 DB로 옮긴다.** 관리자 DB는 지금 QA DB를 그대로 쓰고 prod DB에 두지 않는다. 스테이징(V4, V21)은 5단계, 감사 로그(V22)는 6단계. 메인 테이블은 보류 기간 뒤 새 마이그레이션으로 DROP | 아니오 (generator 적재 대상을 바꿀 수 있는지는 확인 필요, M-3) | 메인 DROP 전: 관리자 DB 변경분을 역복사하고 웹을 메인으로 되돌림. DROP 뒤: 백업 덤프 복원 |
 | D-4(iii) | STG-07 승격 흐름 | **확정: 승격 전 데이터는 관리자 DB가 관리하고, 승격할 때 메인(prod 서버)에 둔 학습 콘텐츠 생성 API를 호출한다.** 관리자 서버가 구조를 검증한 뒤 라벨을 멱등 키로 레슨, 문제, 옵션, 정답을 한 번에 만든다 | 아니오 | D-4(ii)와 같음 |
 | D-5 | 메인 서버 API 계약 | 메인에 남는 16개 엔드포인트를 기존 `/api/v1/admin/**` 경로 그대로 호출한다. 쓰기는 자동 재시도하지 않는다. 연결 2초, 응답 10초. 메인 응답은 상태와 본문 바이트를 그대로 웹에 전달. **확정: 네트워크는 공개 도메인** | 아니오 | 호스트 설정값 하나 변경 |
 | D-6 | 인증 전달 | 받은 `Authorization` 헤더 값을 그대로 메인에 붙인다. 판정 캐시는 유지하되 만료를 토큰 `exp`로 줄이고, 메인이 401이나 403을 주면 그 토큰 캐시를 지우고, 관리자 서버 소유 데이터의 쓰기 요청은 캐시를 건너뛴다. 사람이 요청하지 않은 호출의 인증은 미결 | 아니오 | 필터 분기와 설정값이라 되돌림 PR |
-| D-7 | 응답 형식 호환과 검증 | 기준은 메인의 실제 응답(DTO + Jackson 기본값). 관리자 서버에 새 엔드포인트를 배포하되 웹은 아직 메인을 보게 둔 상태에서, 같은 GET 요청을 prod 메인과 관리자 서버에 보내 JSON 트리를 비교하는 `liveTest` 계약 테스트를 웹 전환의 통과 조건으로 둔다(D-10으로 dev 인스턴스가 없어졌다) | 아니오 | 테스트 삭제 |
-| D-8 | 도메인 이관 작업 정의 | 메인 준비, 관리자 서버 구현, 웹 전환, 메인 코드 삭제 4단계와 단계별 완료 기준. 메인 삭제는 웹 전환 뒤 보류 기간이 지나야 한다. 보류 기간 = 웹이 관리자 서버를 쓰기 시작한 뒤에도 메인 옛 코드를 지우지 않고 두는 기간. 이 동안은 웹만 되돌리면 롤백이 끝난다(10-3) | 보류 기간 길이만 예 (추천 2주) | 메인 삭제 전에는 D-3 롤백. 삭제 뒤에는 삭제 PR revert와 메인 배포 |
+| D-7 | 응답 형식 호환과 검증 | 기준은 메인의 실제 응답(DTO + Jackson 기본값). 새 구현을 헤더 조건(`X-Admin-Route=local`)을 단 채 배포해 웹 요청은 계속 메인으로 넘기고, 헤더를 붙인 GET 요청을 prod 메인과 관리자 서버에 보내 JSON 트리를 비교하는 `liveTest` 계약 테스트를 전환의 통과 조건으로 둔다(D-10으로 dev 인스턴스가 없어졌다) | 아니오 | 테스트 삭제 |
+| D-8 | 도메인 이관 작업 정의 | 메인 준비, 관리자 서버 구현, 전환(헤더 조건 삭제 배포), 메인 코드 삭제 4단계와 단계별 완료 기준. 메인 삭제는 전환 뒤 보류 기간이 지나야 한다. 보류 기간 = 관리자 서버가 그 도메인을 직접 처리한 뒤에도 메인 옛 코드를 지우지 않고 두는 기간. 이 동안은 관리자 서버에서 그 도메인을 다시 메인으로 넘기면 롤백이 끝난다(10-3) | 보류 기간 길이만 예 (추천 2주) | 메인 삭제 전에는 D-3 롤백. 삭제 뒤에는 삭제 PR revert와 메인 배포 |
 | D-9 | 하네스 규칙 개정안 | `.claude/CLAUDE.md`, `README.md`, `.claude/rules/project-structure.md` 전, 후 문안. 깨진 참조는 이 문서, 정책 디렉터리, Swagger로 바꾼다. **확정: 이번 이슈(#28)에서 적용한다.** 하네스 개선 범위를 정한 뒤 함께 반영 | 개선 범위만 예 | 문서 되돌림 |
-| D-10 | 배포 단위 | **확정: 단일 인스턴스.** 지금 컨테이너 하나(`api` 프로필)를 prod 메인 대상으로 쓰고 dev 인스턴스는 두지 않는다. CD는 main 머지 기준으로 바꾼다. 관리자 DB는 D-4(ii)대로 지금 QA DB | 아니오 (관리자 웹이 로그인하는 메인 환경이 prod인지 확인 필요, M-2) | 판정, 호출 대상 호스트를 되돌리고 CD 트리거를 되돌림 |
+| D-10 | 배포 단위 | **확정: 단일 인스턴스.** 지금 컨테이너 하나(`api` 프로필)를 prod 메인 대상으로 쓰고 dev 인스턴스는 두지 않는다. CD는 main 머지 기준으로 바꾼다. 관리자 DB는 D-4(ii)대로 지금 QA DB | 아니오 (관리자 웹 운영이 prod 메인을 보는 것 확인, M-2 해소) | 판정, 호출 대상 호스트를 되돌리고 CD 트리거를 되돌림 |
 
 ## 2. 이관 대상 기능 43개
 
@@ -41,7 +41,7 @@ ID는 이 문서에서 그대로 쓴다. 엔드포인트는 `[main] src/main/jav
 
 | ID | 메서드, 경로 | 메인 Controller.메서드 | 방식 | 모듈 | 단계 | 읽는 테이블(조회) 또는 부작용(API) |
 |---|---|---|---|---|---|---|
-| AUTH-01 | GET `/me` | AdminMeController.getMe | API | auth | 1 (제안) | 없음. 메인 `users` 조회 |
+| AUTH-01 | GET `/me` | AdminMeController.getMe | API | auth | 0 (전달 계층이 맡는다) | 없음. 메인 `users` 조회 |
 | DASH-01 | GET `/dashboard/summary` | AdminDashboardController.getSummary | 조회 | insight | 1 | `users`, `staging_label`, `report` |
 | DASH-02 | GET `/dashboard/active-users/daily?days=` | AdminDashboardController.getDailyActiveUsers | 조회 | insight | 1 | `user_daily_activity` |
 | DASH-03 | GET `/dashboard/active-users/monthly?months=` | AdminDashboardController.getMonthlyActiveUsers | 조회 | insight | 1 | `user_daily_activity` |
@@ -136,7 +136,7 @@ ID는 이 문서에서 그대로 쓴다. 엔드포인트는 `[main] src/main/jav
 - B. 이관 시작 전에 전부 한 번에 바꾼다
 - C. 단계별로 바꾼다
   - C-1: D-2 구조 이동 PR(동작 변경 없는 패키지 이동)과 같은 PR에서 Java 패키지와 앱 이름을 바꾼다
-  - C-2: 1단계 웹 전환 전에 새 도메인을 같은 Caddy 대상(`QA_API_PORT`)에 별칭으로 추가하고, 새 관리자 rewrite는 처음부터 새 도메인을 쓴다. QA rewrite는 아무 때나 옮기고 옛 도메인은 그 뒤에 지운다
+  - C-2: 0단계 웹 변경 전에 새 도메인을 같은 Caddy 대상(`QA_API_PORT`)에 별칭으로 추가하고, 새 관리자 rewrite는 처음부터 새 도메인을 쓴다. QA rewrite는 아무 때나 옮기고 옛 도메인은 그 뒤에 지운다
   - C-3: 6단계를 마친 뒤(또는 이관이 멈춘 조용한 시점) 점검 시간 한 번에 레포, 이미지, 컨테이너, 워커 ID, 배포 경로를 바꾼다
 
 ### 3-4. 비교
@@ -227,7 +227,7 @@ src/main/java/gravit/qa/          # D-1 C-1에서 기준 패키지 이름만 바
 - `observability`, `incident`, `ops`: 이번 43개 기능 중 해당 기능이 없다. 빈 패키지를 미리 만들지 않고, 기능이 생길 때 도메인 모듈 규칙을 그대로 따른다
 - `support`에 RPT를 넣은 이유: 신고는 문제 단위라 `content`와도 가깝지만, RPT는 2단계이고 `content`는 5단계다. RPT를 `content`에 넣으면 `content` 모듈을 2단계에 먼저 열어야 하고, 신고와 문의는 모두 사용자 제출물을 운영자가 처리하는 같은 흐름이다
 - 메인 DB 조회 구현은 각 모듈의 `repository/custom/*RepositoryImpl`에 두고 `@MainDb` 한정자가 붙은 `JdbcTemplate`만 쓴다. 메인 테이블에 대한 JPA 엔티티는 만들지 않는다(QA 데이터소스의 `ddl-auto: validate`와 섞이지 않게, 메인 엔티티를 복제하지 않게)
-- 메인 서버 API 호출은 `adapter/gravit`의 클라이언트로만 한다
+- 메인 서버 API 호출은 `adapter/gravit`의 클라이언트로만 한다. D-3 (c)의 `/api/v1/admin/**` 전달 Controller도 `adapter/gravit`에 둔다(5-7)
 
 ### 4-3. `.claude/rules/project-structure.md`와 충돌하는 부분
 
@@ -239,6 +239,7 @@ src/main/java/gravit/qa/          # D-1 C-1에서 기준 패키지 이름만 바
 | 4 | 처리기 위치 예시 `sprint/handler/SpecLoadJobHandler` | `qa/sprint/handler/` | 예시 경로 변경 |
 | 5 | 데이터소스 규칙 없음 | 메인 DB 읽기 전용 조회 위치와 금지 사항(JPA 엔티티 금지, 쓰기 금지) | 새 절 추가 |
 | 6 | 모듈 사이 의존 규칙 없음 | 4-5의 허용 의존 표 | 새 절 추가 |
+| 7 | `adapter/`는 외부로 나가는 연동만 | `adapter/gravit`에 메인 전달용 수신 Controller 하나(D-3 (c)) | 예외로 명시 |
 
 `.claude/CLAUDE.md`의 "1차 판정은 저장소 코드를 읽기만 한다 … gravit-server, gravit-web, gravit-aos에 쓰지 않는다"는 저장소 코드에 관한 규칙이다. 관리자 서버가 메인 API로 데이터를 바꾸는 것과 충돌하지 않지만, 읽는 사람이 헷갈리지 않게 D-9에서 문장을 나눈다.
 
@@ -310,7 +311,7 @@ ArchUnit을 고른다. 이관 기간에는 모듈이 하나씩 늘어나므로 �
 | 로컬 개발 | vite proxy 1개 추가. MSW는 rewrite 경로에 `/api/v1/admin` 꼬리를 남기면 와일드카드가 그대로 맞는다 | `vercel.json` 규칙을 vite proxy에 복제해야 하고 두 곳이 어긋날 수 있다. MSW 그대로 | vite proxy 1개. MSW 그대로. 실서버로 붙으면 로컬에서도 관리자 서버가 떠 있어야 한다 |
 | 관리자 서버에 새로 생기는 코드 | API 방식 16개를 메인으로 넘기는 전달 코드 | (a)와 같음 | `/api/v1/admin/**` 범용 전달 계층 하나. 이관한 도메인은 더 구체적인 Controller 매핑이 먼저 잡혀 자동으로 빠진다. API 방식 16개도 이 계층을 그대로 쓰므로 이관이 끝나도 남는다(처음 판단의 "임시 코드"는 틀렸다. 5-6) |
 
-### 5-4. 선택 - (a)
+### 5-4. 처음 선택 - (a) (5-6 재검토 뒤 (c)로 바뀜)
 
 이관 기간 동안 관리자 서버 장애와 배포 재기동이 아직 옮기지 않은 기능까지 멈추지 않는 것을 가장 크게 봤다. (c)는 웹 변경이 1회지만 첫날부터 관리자 서버가 관리자 기능 전체의 단일 장애 지점이 되고, 임시 범용 전달 계층을 만들고 검증해야 한다. (b)는 미이관 요청까지 Vercel을 거치게 하고 라우팅 표를 두 곳에 둔다.
 웹 변경 횟수는 (a)가 많지만 한 번이 `api.ts` import 교체라 작고, 웹에 이미 같은 구조(QA 전용 인스턴스 + 공유 재발급)가 있다.
@@ -329,10 +330,11 @@ ArchUnit을 고른다. 이관 기간에는 모듈이 하나씩 늘어나므로 �
 도메인 전환은 그 도메인의 `features/*/api.ts`에서 `apiClient`를 `adminServerClient`로 바꾸는 것뿐이다. 관리자 서버는 rewrite 덕분에 같은 출처로 받으므로 CORS를 추가하지 않는다.
 (c)는 웹 배포가 이관의 병목이 되면 다시 검토한다.
 
-### 5-5. 되돌리는 방법
+### 5-5. 되돌리는 방법 ((a) 기준, 참고)
 
 - 도메인 하나: 그 도메인 `api.ts`의 import를 `apiClient`로 되돌리고 웹을 배포한다. 메인의 옛 코드가 남아 있는 동안(D-8 4단계 전)만 가능하다
 - 전체: `adminServerClient`를 쓰는 곳을 모두 되돌린 뒤 rewrite와 인스턴스를 지운다
+- (c)의 되돌리는 방법은 5-7
 
 ### 5-6. 재검토 (2026-11-18, 사용자 질문)
 
@@ -350,7 +352,34 @@ ArchUnit을 고른다. 이관 기간에는 모듈이 하나씩 늘어나므로 �
 | 전달 계층의 첫 검증 | AUTH-01, RPT-03부터 조금씩 | 첫날부터 43개 전부. 전달 계층 결함은 전체에 바로 드러난다 |
 | 웹 쪽 MSW, 재발급 | 영향 없음 | 영향 없음(`apiClient` base만 바꾸고 `authApiClient`는 메인 그대로) |
 
-(c)를 고르는 조건은 "이관 기간 동안 관리자 서버 재배포, 장애 때 관리자 기능 전체가 멈추는 것을 받아들인다"이다. 내부 운영 도구라 이 조건을 받아들이면 (c)가 웹 변경과 전환 절차가 더 단순하다. 받아들이지 않으면 (a)를 유지한다. 이 선택은 사람이 한다.
+(c)를 고르는 조건은 "이관 기간 동안 관리자 서버 재배포, 장애 때 관리자 기능 전체가 멈추는 것을 받아들인다"이다. 내부 운영 도구라 이 조건을 받아들이면 (c)가 웹 변경과 전환 절차가 더 단순하다.
+사용자가 이 조건을 받아들여 (c)로 확정했다(2026-11-18).
+
+### 5-7. (c) 구성
+
+웹(0단계에 한 번):
+
+| 파일 | 내용 |
+|---|---|
+| `[web] vercel.json` | SPA catch-all 앞에 `{ "source": "/admin-server/api/v1/admin/:path*", "destination": "https://<관리자 도메인>/api/v1/admin/:path*" }` |
+| `[web] src/shared/api/client.ts` | `apiClient` base만 `/admin-server/api/v1/admin`로(환경 변수로 빼면 `VITE_ADMIN_SERVER_BASE`, 기본값 같은 값). `authApiClient`는 메인 절대 주소 그대로(재발급 쿠키가 메인 호스트 전용) |
+| `[web] vite.config.ts` | `/admin-server` proxy → 관리자 도메인(로컬 관리자 서버면 덮어쓰기), 접두 제거 |
+| `[web] src/mocks/handlers.ts` | 변경 없음. `*/api/v1/admin/...` 와일드카드가 새 경로에도 맞는다 |
+
+관리자 서버:
+
+- 전달 계층: `/api/v1/admin/**` 전부를 받는 Controller 하나가 메서드, 경로, 쿼리, 본문, `Authorization`, `Content-Type`을 메인에 그대로 보내고 응답 상태, `Content-Type`, 본문 바이트를 그대로 돌려준다(D-5 7-4, 7-5). 위치는 `adapter/gravit`(메인 경계 전용이라 adapter 안의 유일한 수신 지점으로 둔다, 4-3에 추가)
+- 이관한 도메인은 더 구체적인 Controller 매핑이 먼저 잡혀 전달 계층을 거치지 않는다. 같은 경로의 다른 메서드(예: NTC-02 GET만 옮기고 NTC-04 PATCH는 메인)는 전달 계층으로 가야 하므로 이 동작을 0단계 테스트로 확인한다
+- 검증 중 헤더 조건: 새 도메인 Controller는 처음에 `headers = "X-Admin-Route=local"` 조건을 달고 배포한다. 이 헤더가 있는 요청만 새 구현으로 가고, 웹 요청(헤더 없음)은 전달 계층으로 메인에 간다. 계약 테스트는 헤더를 붙여 관리자 서버 새 구현과 prod 메인을 비교한다. 전환은 헤더 조건을 지우는 배포다
+- 전달 요청도 관리자 서버 필터의 판정(캐시)을 거친 뒤 메인이 다시 판정한다(D-6). 판정 실패는 관리자 서버가 답하고 메인 401, 403은 그대로 넘기며 캐시를 지운다
+
+되돌리는 방법:
+
+| 시점 | 방법 | 소요 |
+|---|---|---|
+| 0단계 웹 변경 직후(전달 계층 문제) | Vercel에서 직전 배포로 롤백하거나 `apiClient` base를 메인으로 되돌려 웹 배포 | 즉시 ~ 웹 빌드 수 분 |
+| 도메인 전환 뒤, 메인 옛 코드 삭제 전 | 그 도메인 Controller에 헤더 조건을 다시 걸거나 전환 커밋 revert 후 관리자 서버 배포. 요청은 다시 메인으로 간다 | 관리자 서버 배포(재기동 동안 관리자 기능 전체 중단) |
+| 메인 옛 코드 삭제 뒤 | 메인 삭제 PR revert → 메인 릴리스 → 위 방법 | 메인 릴리스 주기 |
 
 ---
 
@@ -646,7 +675,7 @@ P-6("응답 형식 유지")의 기준은 메인의 실제 응답으로 둔다. Z
 
 1 + 3을 고른다. D-10에서 dev 인스턴스를 두지 않기로 해, 1은 관리자 서버에 새 엔드포인트를 배포하되 웹은 아직 메인을 보게 둔 상태에서 prod를 대상으로 돌린다. 두 서버가 같은 prod 데이터를 읽으므로 비교가 오히려 정확하다. prod에 쓰지 않도록 비교 대상은 GET(조회, 소유 조회)만이고, API 방식 쓰기는 응답 바이트 전달 테스트(단위)로 확인한다.
 1은 `[qa] build.gradle`의 `liveTest`(`@Tag("live")`) 방식을 그대로 쓴다. 환경 변수(`ADMIN_CONTRACT_MAIN_BASE`, `ADMIN_CONTRACT_ADMIN_BASE`, `ADMIN_CONTRACT_TOKEN`)가 없으면 건너뛴다. 엔드포인트마다 요청 표를 둔다: 기본값, 첫 페이지, 마지막 페이지 다음, 필터 조합, 없는 ID(404), 잘못된 파라미터(400), `page=0`.
-비교는 키 순서만 무시하고 값, 타입, null, 문자열 형식은 그대로 본다. 허용 차이는 9-4의 표에 적은 것만이다. 이 테스트 통과가 웹 전환의 조건이다(D-8).
+비교는 키 순서만 무시하고 값, 타입, null, 문자열 형식은 그대로 본다. 허용 차이는 9-4의 표에 적은 것만이다. 이 테스트 통과가 전환(헤더 조건 삭제)의 조건이다(D-8).
 3의 픽스처 DDL 파일 머리에는 출처 메인 마이그레이션 파일과 커밋을 적는다.
 
 ### 9-3. 공통 응답 형식 규칙
@@ -685,42 +714,42 @@ P-6("응답 형식 유지")의 기준은 메인의 실제 응답으로 둔다. Z
 ### 10-1. 0단계 - 도메인 공통 준비 (한 번)
 
 - [ ] D-1 C-1, D-2 구조 이동 PR(동작 변경 없음, 패키지 이동과 ArchUnit 테스트)
-- [ ] `adapter/gravit` 메인 API 클라이언트(D-5 타임아웃, 헤더, 응답 전달, 502/504)와 테스트
+- [ ] `adapter/gravit` 메인 API 클라이언트(D-5 타임아웃, 헤더, 응답 전달, 502/504)와 `/api/v1/admin/**` 전달 Controller(D-3 (c)), 테스트(메서드, 쿼리, 본문, 오류 본문, 204, 같은 경로 다른 메서드)
 - [ ] D-6 필터 변경(토큰 보관, `exp` 상한, 401/403 캐시 삭제, 소유 데이터 쓰기 시 캐시 건너뛰기)
 - [ ] `global/config/MainDbConfig`, `@MainDb`, `AdminApiExceptionHandler`
 - [ ] 계약 테스트 틀(`liveTest`), 메인 스키마 픽스처 방식
 - [ ] 운영: 읽기 전용 계정, 서버 `.env` 키, (C-2) 새 도메인 별칭(D-10 작업 목록)
 - [ ] D-10: 판정, 호출 대상(`QA_AUTH_HOST`)을 prod 메인으로, CD 트리거를 dev push에서 main 머지로(브랜치 전략 변경은 D-9 하네스 개선과 함께)
-- [ ] 웹: `adminServerClient`, rewrite, vite proxy(5-4 표). 이 시점에는 어느 도메인도 전환하지 않는다
+- [ ] 웹 변경 전 확인: 로컬 웹(vite proxy → 운영 관리자 서버)으로 43개 기능의 주요 화면을 한 바퀴 돈다. 이 시점에는 모든 요청이 전달 계층으로 메인에 간다
+- [ ] 웹: `apiClient` base, rewrite, vite proxy(5-7 표). 이 배포부터 관리자 기능 전체가 관리자 서버를 지난다
 
 ### 10-2. 도메인 하나의 단계와 완료 기준
 
 | 단계 | 완료 기준 |
 |---|---|
 | 1. 메인 쪽 준비 | - [ ] 대상 ID의 Controller, Docs(검증 어노테이션), Service, Repository, DTO, 테스트 파일 목록<br>- [ ] 조회: 읽는 테이블, 컬럼, 정렬, 숨은 동작(6-1 목록) 확정, GRANT 추가 요청<br>- [ ] API: 메인 엔드포인트 유지 확인, 부작용과 재요청 결과(7-1) 확인<br>- [ ] 다른 도메인이 같이 쓰는 Repository 메서드 표시(지우면 안 되는 것)<br>- [ ] 메인 PR이 필요하면(STG-07 A) 메인에 먼저 머지, 배포 |
-| 2. 관리자 서버 구현 | - [ ] 같은 경로, 같은 HTTP 메서드, 같은 기본값과 검증 범위<br>- [ ] 응답 DTO는 같은 JSON(9-3), 오류 코드와 메시지 복사(9-4)<br>- [ ] 단위, 통합 테스트(픽스처 DDL) 통과, ArchUnit 통과<br>- [ ] 배포(웹은 아직 메인) 후 prod GET 계약 테스트 통과(허용 차이 외 0건) |
-| 3. 웹 전환 | - [ ] `features/*/api.ts` import 교체 PR(웹)<br>- [ ] Vercel 미리보기 배포나 로컬(vite proxy)에서 화면 확인: 목록, 상세, 빈 상태, 오류 토스트, 401 재발급<br>- [ ] 운영 배포 후 관리자 서버 로그에서 해당 경로 2xx 확인, 메인 로그에서 해당 GET 요청이 사라졌는지 확인 |
+| 2. 관리자 서버 구현 | - [ ] 같은 경로, 같은 HTTP 메서드, 같은 기본값과 검증 범위<br>- [ ] 응답 DTO는 같은 JSON(9-3), 오류 코드와 메시지 복사(9-4)<br>- [ ] 단위, 통합 테스트(픽스처 DDL) 통과, ArchUnit 통과<br>- [ ] Controller에 헤더 조건(`X-Admin-Route=local`)을 단 채 배포(웹 요청은 계속 메인으로 넘어감)<br>- [ ] 헤더를 붙인 prod GET 계약 테스트 통과(허용 차이 외 0건) |
+| 3. 전환 | - [ ] 헤더 조건을 지우는 PR(관리자 서버) 머지, 배포. 웹 변경 없음<br>- [ ] 운영 웹에서 화면 확인: 목록, 상세, 빈 상태, 오류 토스트, 401 재발급<br>- [ ] 관리자 서버 로그에서 해당 경로가 전달 계층이 아닌 새 구현으로 처리되는지, 메인 로그에서 해당 GET 요청이 사라졌는지 확인 |
 | 4. 메인 옛 코드 삭제 | - [ ] 보류 기간(추천 2주, 사람 결정) 동안 롤백 없음<br>- [ ] 조회 기능의 Controller, Docs, Service, Repository, DTO, 테스트 삭제 PR(메인). API 기능은 남긴다<br>- [ ] 다른 도메인이 쓰는 메서드는 남긴다 |
 
-### 10-3. 전환 절차와 롤백 절차 (D-3 (a) 기준)
+### 10-3. 전환 절차와 롤백 절차 (D-3 (c) 기준)
 
-전환: 관리자 서버 배포(웹은 아직 메인) → prod GET 계약 테스트 통과 → 웹 import 교체 PR 머지, 배포 → 확인 → 보류 → 메인 삭제.
+전환: 관리자 서버에 헤더 조건을 단 새 구현 배포 → 헤더를 붙인 prod GET 계약 테스트 통과 → 헤더 조건을 지우는 배포 → 확인 → 보류 → 메인 삭제.
 
-보류 기간의 뜻: 웹이 관리자 서버를 쓰기 시작한 뒤에도 메인의 옛 Controller, Service를 바로 지우지 않고 남겨 두는 기간이다. 이 동안 문제가 생기면 웹만 되돌리면 되고 메인은 손대지 않는다(아래 표 첫 세 줄, 분 단위). 옛 코드를 지운 뒤에는 메인 코드를 되살려 메인 릴리스까지 해야 해서 롤백이 가장 느려진다. 2주를 추천하는 이유는 문의 답변, 공지 삭제, 승격처럼 드물게 쓰는 기능도 실제로 한 번 이상 쓰일 시간을 주기 위해서다. D-3을 (c)로 바꾸면 "웹만 되돌린다" 대신 "관리자 서버에서 그 도메인 Controller를 빼고 배포한다"가 되고, 보류 기간의 뜻은 같다.
+보류 기간의 뜻: 관리자 서버가 그 도메인을 직접 처리하기 시작한 뒤에도 메인의 옛 Controller, Service를 바로 지우지 않고 남겨 두는 기간이다. 이 동안 문제가 생기면 관리자 서버에서 그 도메인을 다시 메인으로 넘기기만 하면 되고 메인은 손대지 않는다. 옛 코드를 지운 뒤에는 메인 코드를 되살려 메인 릴리스까지 해야 해서 롤백이 가장 느려진다. 2주를 추천하는 이유는 문의 답변, 공지 삭제, 승격처럼 드물게 쓰는 기능도 실제로 한 번 이상 쓰일 시간을 주기 위해서다.
 
 롤백:
 
 | 시점 | 방법 | 소요 |
 |---|---|---|
-| 웹 전환 직후, 다른 웹 변경 없음 | Vercel에서 직전 배포로 롤백 | 즉시 |
-| 웹 전환 뒤 다른 웹 변경이 섞임 | 그 도메인 import를 되돌린 PR을 배포 | 웹 빌드 수 분 |
-| 관리자 서버만 문제(예: 한 엔드포인트 오류) | 위 둘 중 하나로 웹을 메인으로 돌린 뒤 관리자 서버를 고친다 | 같음 |
-| 메인 옛 코드 삭제 뒤 | 삭제 PR revert → 메인 dev 검증 → 메인 릴리스 → 웹 되돌림 | 메인 릴리스 주기(가장 느림. 그래서 보류 기간을 둔다) |
+| 전환 뒤, 메인 옛 코드 삭제 전 | 그 도메인 Controller에 헤더 조건을 다시 걸거나 전환 커밋 revert 후 관리자 서버 배포. 요청은 전달 계층으로 메인에 간다 | 관리자 서버 배포(재기동 동안 관리자 기능 전체 중단) |
+| 관리자 서버 전체 문제(전달 계층 포함) | 웹 `apiClient` base를 메인으로 되돌려 웹 배포(또는 Vercel 직전 배포) | 즉시 ~ 웹 빌드 수 분 |
+| 메인 옛 코드 삭제 뒤 | 삭제 PR revert → 메인 검증 → 메인 릴리스 → 위 첫 줄 | 메인 릴리스 주기(가장 느림. 그래서 보류 기간을 둔다) |
 | 소유 데이터 도메인(5단계) | 6-2의 되돌리는 방법(역복사)이 먼저 필요 | 데이터 양에 따름 |
 
-### 10-4. 예시 - 1단계 대시보드, 통계(DASH-01~03, + AUTH-01 제안)
+### 10-4. 예시 - 1단계 대시보드, 통계(DASH-01~03)
 
-AUTH-01을 1단계에 넣자는 것은 제안이다. 부작용이 없는 GET이라 D-5 전달 경로를 2단계(RPT-03, 첫 쓰기 전달)보다 먼저 검증할 수 있고, 웹 부트스트랩에서 실패해도 '운영자'로 대체되는 비차단 호출이다(`[web] docs/conventions/decisions.md` D4).
+AUTH-01은 API 방식이라 0단계 전달 계층이 처음부터 맡는다. 따로 옮길 코드가 없다.
 
 **메인 (gravit-server dev `0d3f9a3`)**
 
@@ -754,30 +783,23 @@ AUTH-01을 1단계에 넣자는 것은 제안이다. 부작용이 없는 GET이�
 
 | 파일 | 내용 |
 |---|---|
-| `src/main/java/gravit/qa/insight/controller/DashboardController.java` | `@RequestMapping("/api/v1/admin/dashboard")`, 3개 GET, 기본값 30, 12 |
+| `src/main/java/gravit/qa/insight/controller/DashboardController.java` | `@RequestMapping("/api/v1/admin/dashboard")`, 3개 GET, 기본값 30, 12. 검증 중에는 `headers = "X-Admin-Route=local"`, 전환 PR에서 삭제 |
 | `src/main/java/gravit/qa/insight/controller/docs/DashboardControllerDocs.java` | `@Min`, `@Max`를 메인과 같게 |
 | `src/main/java/gravit/qa/insight/service/DashboardService.java` | 메인 Service와 같은 계산, `Clock` 주입 |
 | `src/main/java/gravit/qa/insight/repository/custom/DashboardStatsRepository.java`, `DashboardStatsRepositoryImpl.java` | `@MainDb JdbcTemplate` 조회 |
 | `src/main/java/gravit/qa/insight/repository/sql/DashboardStatsSql.java` | SQL 상수 4개(회원 수, 대기 라벨 수, 미처리 신고 수, DAU, MAU) |
 | `src/main/java/gravit/qa/insight/dto/response/DashboardSummaryResponse.java`, `DailyActiveUserTrendResponse.java`, `DailyActiveUserPointResponse.java`, `MonthlyActiveUserTrendResponse.java`, `MonthlyActiveUserPointResponse.java` | 메인과 같은 필드, 타입 |
 | `src/main/java/gravit/qa/insight/dto/internal/DailyActiveUserCountDto.java`, `MonthlyActiveUserCountDto.java` | 쿼리 결과 |
-| `src/main/java/gravit/qa/auth/controller/AdminMeController.java` (AUTH-01) | `GET /api/v1/admin/me` → `adapter/gravit` 전달 |
 | `src/main/java/gravit/qa/global/config/MainDbConfig.java`, `MainDbProps.java`, `src/main/java/gravit/qa/global/annotation/MainDb.java` | 0단계에서 만든 것 사용 |
 | `src/main/resources/application.yml`, `.env.example`, `docker-compose-qa.yml` | `qa.main-db.*`, `MAIN_DB_URL`, `MAIN_DB_USERNAME`, `MAIN_DB_PASSWORD` (0단계) |
 | `src/test/java/gravit/qa/insight/service/DashboardServiceTest.java` | 고정 `Clock`: 빈 날 채우기, 월 경계, `inProgress` |
 | `src/test/java/gravit/qa/insight/repository/DashboardStatsRepositoryIntegrationTest.java` + `src/test/resources/maindb/dashboard.sql` | 픽스처 DDL(출처 메인 V1, V21, V42) |
 | `src/test/java/gravit/qa/insight/controller/DashboardControllerTest.java` | `days=0`, `days=366`, `months=37`의 400 형식 |
-| `src/test/java/gravit/qa/insight/contract/DashboardContractLiveTest.java` | `@Tag("live")`, 요청 표: 기본값, `days=1`, `days=365`, `months=1`, `months=36`, 범위 위반 |
+| `src/test/java/gravit/qa/insight/contract/DashboardContractLiveTest.java` | `@Tag("live")`, `X-Admin-Route: local` 헤더를 붙여 prod 메인과 비교. 요청 표: 기본값, `days=1`, `days=365`, `months=1`, `months=36`, 범위 위반 |
 
-**웹 (admin-web)**
+**웹 (admin-web)**: 1단계에서 바꿀 파일이 없다. 0단계에서 `apiClient` base를 바꾼 뒤로 `src/features/dashboard/api.ts`의 호출은 그대로 관리자 서버로 간다. `src/mocks/handlers.ts`도 그대로다.
 
-| 파일 | 내용 |
-|---|---|
-| `src/features/dashboard/api.ts` | `apiClient` → `adminServerClient` (3개 함수) |
-| `src/features/auth/api.ts` | AUTH-01을 1단계에 넣으면 `/me` 호출만 `adminServerClient`(40행) |
-| `src/mocks/handlers.ts` | 변경 없음 |
-
-롤백: 웹 `dashboard/api.ts` import 되돌림. 메인 삭제 PR 전까지 즉시 가능하다.
+롤백: `DashboardController`에 헤더 조건을 다시 걸어 배포하면 대시보드 요청이 전달 계층으로 메인에 간다. 메인 삭제 PR 전까지 가능하다.
 
 ---
 
@@ -794,7 +816,7 @@ D-10 결정으로 CLAUDE.md "실행 단위"와 README "배포"의 CD 설명(dev 
 | 설계 원본 줄 | 설계 원본: `docs/design/03_DESIGN.md`, API 계약: `docs/api/openapi.yaml` | 관리자 서버 설계: `docs/design/ADMIN_SERVER_DESIGN.md`. QA 정책: `.claude/spec/qa-policy/`. API 계약: 실행 중 Swagger(`/v3/api-docs`)와 `*ControllerDocs`. 옮겨 오는 관리자 API는 메인의 실제 응답이 기준(설계 D-7) |
 | 기술 스택 | Spring Security: 자체 JWT 검증 없음. 관리자 토큰을 gravit-server `GET /api/v1/admin/me`에 되던져 판정 | 같은 줄 + "메인 API 호출은 받은 토큰을 그대로 전달한다(P-7). 메인 DB는 읽기 전용 두 번째 데이터소스(`@MainDb`)로만 읽는다" |
 | 실행 단위 표 | `api` 한 줄 | 그대로(D-10 단일 인스턴스). "prod 메인을 대상으로 하고 main 머지로 배포한다" 문장 추가 |
-| 새 절 "관리자 서버 원칙" | 없음 | - 데이터 소유 기준: 소유(QA, 스테이징, 감사 로그)는 관리자 DB, API(메인 도메인 쓰기, 알림 같은 부작용)는 메인 API, 조회는 메인 DB 읽기 전용<br>- 메인 DB에 쓰지 않는다. 메인 테이블에 JPA 엔티티를 만들지 않는다<br>- 옮기는 관리자 API는 경로, 응답 형식을 바꾸지 않는다(P-6). 웹 전환 전에 계약 테스트를 통과한다<br>- 메인 API 쓰기는 자동 재시도하지 않는다<br>- 모듈 사이 의존은 `ArchitectureTest`의 허용 표를 따른다 |
+| 새 절 "관리자 서버 원칙" | 없음 | - 데이터 소유 기준: 소유(QA, 스테이징, 감사 로그)는 관리자 DB, API(메인 도메인 쓰기, 알림 같은 부작용)는 메인 API, 조회는 메인 DB 읽기 전용<br>- 메인 DB에 쓰지 않는다. 메인 테이블에 JPA 엔티티를 만들지 않는다<br>- 옮기는 관리자 API는 경로, 응답 형식을 바꾸지 않는다(P-6). 전환(헤더 조건 삭제) 전에 계약 테스트를 통과한다. 아직 옮기지 않은 관리자 API는 전달 계층이 메인으로 넘긴다<br>- 메인 API 쓰기는 자동 재시도하지 않는다<br>- 모듈 사이 의존은 `ArchitectureTest`의 허용 표를 따른다 |
 | QA 플랫폼 원칙 6번째 줄 | 1차 판정은 저장소 코드를 읽기만 한다. 저장소 테스트를 실행하지 않고, gravit-server, gravit-web, gravit-aos에 쓰지 않는다 | 1차 판정은 저장소(GitHub) 코드를 읽기만 한다. 저장소 테스트를 실행하지 않고 세 저장소에 커밋, 푸시하지 않는다. (메인 데이터 변경은 관리자 서버 원칙의 메인 API로만 한다) |
 | 규칙 참조 | 프로젝트 구조 → `project-structure.md` | 같은 줄 + "모듈 배치와 허용 의존 → `project-structure.md`" |
 
@@ -852,7 +874,7 @@ D-10 결정으로 CLAUDE.md "실행 단위"와 README "배포"의 CD 설명(dev 
 
 E1로 생기는 변경:
 
-- 판정, 호출 대상 `QA_AUTH_HOST`를 prod 메인(`https://grav-it.inuappcenter.kr`)으로 바꾼다. 이 값은 관리자 웹이 로그인하는 메인 환경과 같아야 한다. 지금 값이 dev라(`[qa] .env.example`) 관리자 웹 운영 배포의 `VITE_API_HOST`가 prod인지 먼저 확인한다(M-2). 다르면 QA 메뉴가 바꾸는 순간 401로 막힌다
+- 판정, 호출 대상 `QA_AUTH_HOST`를 prod 메인(`https://grav-it.inuappcenter.kr`)으로 바꾼다. 이 값은 관리자 웹이 로그인하는 메인 환경과 같아야 한다. 지금 값은 dev다(`[qa] .env.example`). 관리자 웹 운영 배포가 prod 메인을 본다고 확인했으므로(M-2 해소) prod로 바꾸면 QA 메뉴와 관리자 기능이 같은 토큰으로 판정된다
 - 메인 DB 읽기 전용 계정은 prod 메인 DB에 만든다
 - 관리자 DB는 D-4(ii)대로 지금 QA DB를 그대로 쓴다
 - CD 트리거를 dev push에서 main 머지로 바꾼다(`[qa] .github/workflows/cd.yml:3-5`). `ci.yml`의 PR 대상, `.claude/spec/git-convention.md`의 브랜치 전략(main → dev → 개발 브랜치), open-issue, open-pr 스킬의 dev 기본값도 함께 바뀐다(하네스 개선 범위)
@@ -888,7 +910,7 @@ E1로 생기는 변경:
 | `MAIN_DB_URL` | 서버 `.env` | 아니오 | 0 |
 | `MAIN_DB_USERNAME` | 서버 `.env` | 아니오 | 0 |
 | `MAIN_DB_PASSWORD` | 서버 `.env` | 예 | 0 |
-| `QA_AUTH_HOST` | 서버 `.env` | 아니오 | 이미 있음. 값을 prod 메인으로 바꾼다(M-2 확인 뒤). 메인 API 호출도 같은 값을 쓴다 |
+| `QA_AUTH_HOST` | 서버 `.env` | 아니오 | 이미 있음. 값을 prod 메인으로 바꾼다. 메인 API 호출도 같은 값을 쓴다 |
 
 CD는 서버 `.env`를 읽지도 쓰지도 않는 규칙을 유지한다(`[qa] .github/workflows/cd.yml:92-97`).
 
@@ -902,7 +924,7 @@ CD는 서버 `.env`를 읽지도 쓰지도 않는 규칙을 유지한다(`[qa] .
 | 4 | 서버 `.env`에 `MAIN_DB_*` 추가(runbook 2단계의 `add_env`) | 0 | 값은 출력하지 않는다 |
 | 5 | (C-2) 새 도메인 DNS, Caddy 사이트를 `QA_API_PORT`로 | 0 | 옛 도메인 유지 |
 | 6 | 단계마다 GRANT 추가 | 3, 5 | 6-1 목록 |
-| 7 | 서버 `.env`의 `QA_AUTH_HOST`를 prod 메인으로 변경(M-2 확인 뒤) | 0 | QA 메뉴도 prod 관리자 토큰으로 판정된다 |
+| 7 | 서버 `.env`의 `QA_AUTH_HOST`를 prod 메인으로 변경 | 0 | QA 메뉴도 prod 관리자 토큰으로 판정된다 |
 | 8 | generator 중지, 데이터 복사와 검증, 시퀀스 맞추기, generator 대상 변경 | 5 | 6-2 절차 |
 | 9 | 감사 로그 기존 행 복사 | 6 | |
 | 10 | 보류 뒤 메인 스테이징, 감사 테이블 백업 덤프 | 5, 6 | DROP 전 |
@@ -916,7 +938,7 @@ CD는 서버 `.env`를 읽지도 쓰지도 않는 규칙을 유지한다(`[qa] .
 | # | 내용 | 관련 |
 |---|---|---|
 | M-1 | 사람이 요청하지 않은 호출(스케줄러, 작업 처리기)이 메인 API를 불러야 할 때의 인증. 지금 이관 대상 43개에는 없다 | D-6 |
-| M-2 | 관리자 웹 운영 배포가 보는 메인 환경(`VITE_API_HOST`). D-10 단일 인스턴스를 prod 메인에 붙이려면 prod여야 한다. dev, prod의 Postgres 인스턴스가 같은지도 | D-4, D-10 |
+| M-2 | 해소(2026-11-18): 관리자 웹 운영 배포는 prod 메인을 본다. `QA_AUTH_HOST`를 prod로 바꾸면 QA 메뉴와 관리자 기능이 같은 토큰으로 맞는다. dev, prod의 Postgres 인스턴스가 같은지는 여전히 확인 필요(읽기 전용 계정을 만들 때 확인) | D-4, D-10 |
 | M-3 | generator 저장소와 적재 방식(대상 DB 변경 가능 여부) | D-4(ii) |
 | M-4 | NTC-03 중복 제출 방지를 웹 버튼 잠금 외에 서버에서 할지(메인 멱등 키 지원 여부) | D-5 |
 | M-5 | 이관이 끝난 뒤 메인 공개 도메인의 관리자 쓰기 엔드포인트를 막을지 | D-5 |
@@ -926,7 +948,7 @@ CD는 서버 `.env`를 읽지도 쓰지도 않는 규칙을 유지한다(`[qa] .
 | M-9 | 외부 가용성 감시에 QA 도메인이 등록돼 있는지 | D-1 |
 | M-10 | `.gitignore`에 이 문서 예외를 둘지 | D-9 |
 | M-11 | 관리자 DB(`gravit_qa`)가 있는 인스턴스(메인 dev와 같은 인스턴스)의 백업 정책. 승격 전 콘텐츠와 prod 행위 감사 로그가 이곳에 쌓인다 | D-4(ii) |
-| M-12 | D-3 재검토: (a) 도메인별 웹 전환과 (c) 전부 관리자 서버 경유 중 선택(5-6) | D-3 |
+| M-12 | 해소(2026-11-18): D-3은 (c) | D-3 |
 
 ## 14. 기준 문서 사이 불일치 목록
 
