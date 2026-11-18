@@ -1,4 +1,4 @@
-### Related Issue
+## Related Issue
 
 <!--
 닫을 이슈 번호만 적는다.
@@ -9,7 +9,7 @@
 
 <br>
 
-### Implementation
+## Implementation
 
 <!--
 이슈의 Plan을 실제로 어떻게 구현했는지 간단히 쓴다.

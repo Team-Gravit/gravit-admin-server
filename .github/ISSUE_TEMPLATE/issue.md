@@ -6,7 +6,7 @@ labels: ""
 assignees: ""
 ---
 
-### Issue
+## Issue
 
 <!--
 어떤 이슈가 있었는가.
@@ -18,7 +18,7 @@ assignees: ""
 
 <br>
 
-### Plan
+## Plan
 
 <!--
 어떻게 작업하려고 하는가.

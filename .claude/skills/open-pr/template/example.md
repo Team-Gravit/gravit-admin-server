@@ -2,13 +2,13 @@
 open-pr 작성 예시 (가정한 내용이다. 구조, 분량, 말투만 참고하고 내용을 베끼지 않는다).
 제목: feat: 대시보드 API를 관리자 서버로 이관(#30)
 -->
-### Related Issue
+## Related Issue
 
 - close #30
 
 <br>
 
-### Implementation
+## Implementation
 
 대시보드 요청은 전달 계층을 거쳐 메인 admin 패키지가 응답하고 있었고, 계산 규칙과 검증 범위는 메인 코드에만 있었습니다.
 

@@ -13,7 +13,7 @@ effort: medium
 
 ## PR 생성
 
-PR은 두 가지만 담는다. 닫을 이슈(`### Related Issue`), 이슈의 Plan을 어떻게 구현했는가(`### Implementation`).
+PR은 두 가지만 담는다. 닫을 이슈(`## Related Issue`), 이슈의 Plan을 어떻게 구현했는가(`## Implementation`).
 
 ### 시작 조건
 
