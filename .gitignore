@@ -12,5 +12,8 @@ out/
 *.log
 evidence/
 
-/docs/*
-!/docs/deploy-runbook.md
+# 설계, 운영 문서는 로컬에서만 관리한다
+/docs/
+
+# 작업 계획서는 로컬 작업 메모라 추적하지 않는다
+/.claude/resources/plans/PLAN-*.md
