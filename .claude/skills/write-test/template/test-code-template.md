@@ -3,17 +3,17 @@
 ### 통합 테스트
 
 ```java
-package gravit.qa.{domain}.service;
+package gravit.admin.{module}.service;
 
-import gravit.qa.global.exception.domain.RestApiException;
-import gravit.qa.support.QaSpringBootTest;
+import gravit.admin.global.exception.domain.RestApiException;
+import gravit.admin.support.QaSpringBootTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static gravit.qa.global.exception.domain.CustomErrorCode.{ERROR_CODE};
+import static gravit.admin.global.exception.domain.CustomErrorCode.{ERROR_CODE};
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -63,9 +63,9 @@ class {Target}IntegrationTest {
 ### Fixture (정적 팩토리)
 
 ```java
-package gravit.qa.{domain}.fixture;
+package gravit.admin.{module}.fixture;
 
-import gravit.qa.{domain}.domain.{Entity};
+import gravit.admin.{module}.domain.{Entity};
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class {Entity}Fixture {

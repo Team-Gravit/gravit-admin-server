@@ -13,7 +13,7 @@ Controller → Facade → Service → Repository 순서를 따른다.
 
 ### 예외 처리
 
-- `throw new RestApiException(XXX)` 패턴을 사용하라. `CustomErrorCode` 상수는 static import로 쓴다 (`import static gravit.qa.global.exception.domain.CustomErrorCode.XXX;`). `CustomErrorCode.XXX` 표기는 쓰지 마라
+- `throw new RestApiException(XXX)` 패턴을 사용하라. `CustomErrorCode` 상수는 static import로 쓴다 (`import static gravit.admin.global.exception.domain.CustomErrorCode.XXX;`). `CustomErrorCode.XXX` 표기는 쓰지 마라
 - 새 에러코드는 `CustomErrorCode` enum에 추가하되, 카테고리별 주석 그룹을 유지하라
 - 에러코드 형식: `ERROR_NAME(NOT_FOUND, "DOMAIN_CODE", "한글 메시지")`. `HttpStatus` 상수도 static import로 쓴다
   - 예외: `CustomErrorCode` 안에서는 에러코드 이름과 같은 `HttpStatus` 상수(`INTERNAL_SERVER_ERROR`)를 static import로 쓸 수 없다. 이름만 쓰면 enum의 에러코드를 가리키므로 그 상수를 쓰는 에러코드는 모두 `HttpStatus.INTERNAL_SERVER_ERROR`로 쓴다

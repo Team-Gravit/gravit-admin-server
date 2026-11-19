@@ -29,7 +29,7 @@ effort: high
 
 ### Phase 2: Fixture 준비
 
-1. `src/test/java/gravit/qa/{domain}/fixture/`의 기존 Fixture를 Glob으로 찾아 재사용한다
+1. `src/test/java/gravit/admin/{module}/fixture/` (`qa`는 `{module}/{domain}/fixture/`)의 기존 Fixture를 Glob으로 찾아 재사용한다
 2. 없으면 [template/test-code-template.md](template/test-code-template.md)의 Fixture 절을 따라 만든다
 
 > Skip 조건: 필요한 Fixture가 모두 있거나 대상이 Entity를 쓰지 않을 때
@@ -45,7 +45,7 @@ effort: high
 
 ### Phase 4: 실행
 
-1. 실행 환경: Docker(Testcontainers)나 `QA_TEST_DB_URL`이 필요하다. `QA_TEST_DB_URL`이 없고 `docker info`가 실패하면 Docker를 켜 달라고 알리고 멈춘다
+1. 실행 환경: Docker(Testcontainers)나 `ADMIN_TEST_DB_URL`이 필요하다. `ADMIN_TEST_DB_URL`이 없고 `docker info`가 실패하면 Docker를 켜 달라고 알리고 멈춘다
 2. 명령
    - 클래스, 메서드: `./gradlew test --tests "{패키지}.{테스트 클래스}"` (`#메서드`는 `.{메서드}`로)
    - 전체: `./gradlew test`. 오래 걸리므로 Bash `run_in_background`로 돌린다

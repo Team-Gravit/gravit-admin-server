@@ -32,7 +32,7 @@ effort: high
 1. 레이어 순서대로 구현한다: Entity, Flyway 마이그레이션 → Repository → Service → Facade(여러 도메인 Service를 조합할 때만) → DTO → Controller
 2. 파일을 만들기 전에 Glob으로 있는지 확인하고, 있으면 Edit으로 고친다
 3. 패키지 위치와 코드 규칙은 `.claude/rules/`(project-structure, code-convention, migration)를 따른다
-4. 이 서버는 `/api/**` 전체를 관리자 판정 필터가 처리한다(`security/config/SecurityConfig`, `security/filter/AdminTokenAuthenticationFilter`). 판정 없이 열어야 하는 경로를 만들면 두 곳을 함께 고친다
+4. 이 서버는 `/api/**` 전체를 관리자 판정 필터가 처리한다(`auth/config/SecurityConfig`, `auth/filter/AdminTokenAuthenticationFilter`). 판정 없이 열어야 하는 경로를 만들면 두 곳을 함께 고친다
 5. 정책(상태 전이, 재시도, 분류 기준, 성공과 실패 조건, 권한 범위)이 바뀌면 `.claude/spec/qa-policy/`의 해당 파일을 같은 작업에서 고친다
 6. 관리자 서버 이관 작업이면 `docs/design/ADMIN_SERVER_DESIGN.md` D-8의 단계별 완료 기준을 따른다
 

@@ -12,7 +12,7 @@ paths:
 
 - 파일명: `{Class}IntegrationTest.java`
 - 클래스 어노테이션: `@QaSpringBootTest`. 아래 구성이 함께 들어온다
-  - PostgreSQL: 환경 변수 `QA_TEST_DB_URL`(+`QA_TEST_DB_USERNAME`, `QA_TEST_DB_PASSWORD`)이 있으면 그 DB, 없으면 Testcontainers (`PostgresTestConfig`)
+  - PostgreSQL: 환경 변수 `ADMIN_TEST_DB_URL`(+`ADMIN_TEST_DB_USERNAME`, `ADMIN_TEST_DB_PASSWORD`)이 있으면 그 DB, 없으면 Testcontainers (`PostgresTestConfig`)
   - 조작 가능한 시계 `TestClock` (`@Primary`, 기준 `2026-10-16T12:00+09:00`). `advance(Duration)`으로 시간을 진행한다
   - `/admin/me` 스텁 서버 `AdminMeStubServer` (`qa.auth.host`가 스텁을 가리킨다)
   - `DatabaseClearExtension`: 매 테스트 전에 public 스키마 TRUNCATE(시퀀스 초기화), 시계·스텁·인증 캐시 초기화
@@ -47,7 +47,7 @@ Spring 의존 없이 입력만으로 결과가 정해지는 domain, util, suppor
 `RestApiException`을 던지는 예외 케이스는 반드시 `errorCode`까지 검증하라.
 
 ```java
-import static gravit.qa.global.exception.domain.CustomErrorCode.JOB_NOT_FOUND;
+import static gravit.admin.global.exception.domain.CustomErrorCode.JOB_NOT_FOUND;
 
 assertThatThrownBy(() -> jobCommandService.requestCancel(999L))
         .isInstanceOf(RestApiException.class)
@@ -59,7 +59,7 @@ assertThatThrownBy(() -> jobCommandService.requestCancel(999L))
 
 | 항목 | 규칙 |
 |---|---|
-| 위치 | `src/test/java/gravit/qa/{domain}/fixture/` |
+| 위치 | `src/test/java/gravit/admin/{module}/fixture/` (`qa`는 `{module}/{domain}/fixture/`) |
 | 메서드명 | 한글로 시나리오 표현 (`SprintFixture.준비_전_스프린트()`) |
 | static 팩토리 fixture | 저장하지 않은 Entity나 DTO를 반환하는 `{Domain}Fixture` 클래스 |
 | 저장형 fixture | `@TestComponent` + `@RequiredArgsConstructor`로 Repository를 주입받아 저장까지 하는 fixture |

@@ -1,6 +1,6 @@
 ## 체크리스트, 셀, 종료
 
-구현: `checklist/support/ChecklistGenerator`, `ChecklistDraftValidator`, `checklist/facade/ChecklistFacade`, `checklist/service/ChecklistCommandService`, `sprint/facade/SprintFacade`
+구현: `qa/checklist/support/ChecklistGenerator`, `ChecklistDraftValidator`, `qa/checklist/facade/ChecklistFacade`, `qa/checklist/service/ChecklistCommandService`, `qa/sprint/facade/SprintFacade`
 
 ### 생성 (CHECKLIST_GENERATE, D6~D8)
 
