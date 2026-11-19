@@ -1,6 +1,6 @@
 spring:
   application:
-    name: gravit-qa
+    name: gravit-admin
   datasource:
     url: ${QA_DB_URL}
     username: ${QA_DB_USERNAME}
