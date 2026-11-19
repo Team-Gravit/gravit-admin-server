@@ -1,18 +1,18 @@
-# 1차 자동화 검수 (코드 읽기 판정)
+## 1차 자동화 검수 (코드 읽기 판정)
 
 구현: `autoReview/support/CodeSelector`, `ServerCodeSelector`, `WebCodeSelector`, `AppCodeSelector`, `CodeChunker`, `AutoReviewer`, `RepoSourceReader`, `sprint/support/AutoReviewStep`
 
-## 원칙
+### 원칙
 
 - 저장소 테스트를 실행하지 않는다. CONNECT 단계에서 잡은 `qa-baseline` SHA의 코드만 읽는다(세 저장소는 읽기만 한다)
 - 파일 목록은 Git Trees API(재귀) 1회, 내용은 Blobs API. 같은 blob은 `repo-cache/{blob SHA}`에서 다시 쓴다. 200KB가 넘는 파일은 읽지 않는다
 
-## 단위
+### 단위
 
 - 화면 × 파트. 그 파트가 들어 있는 AUTO 항목을 한 번에 판정한다
 - 고른 파일이 없으면 LLM을 부르지 않고 셀을 UNCHECKED로 두며 사유 `판정 불가: 관련 코드를 찾지 못했습니다(…)`
 
-## 파일 고르기
+### 파일 고르기
 
 | 파트 | 저장소 | 규칙 |
 |---|---|---|
@@ -22,7 +22,7 @@
 
 - 깊이 순서, 같은 깊이는 경로 순서로 놓는다. SERVER의 상수 발췌는 통째로 넣은 파일 뒤에 경로, 줄 순서로 놓는다
 
-### SERVER 클래스 이름 해석 (D-7)
+#### SERVER 클래스 이름 해석 (D-7)
 
 단순 이름이 같은 클래스가 여러 패키지에 있다(`0eced9c`: `admin/dto/response`와 사용자 쪽 `*DetailResponse` 등 7쌍). 참조한 파일 기준으로 아래 순서로 찾는다.
 
@@ -37,7 +37,7 @@
 - 컨트롤러는 이름이 겹쳐도 모든 `*Controller.java`에서 찾는다
 - `import static a.b.C.NAME;`의 `C`가 저장소 파일이고 통째로 넣지 않았으면, `NAME` 선언 줄(enum 상수 또는 `static` 필드)만 넣는다. 오류 코드처럼 HTTP 상태가 상수에만 있는 경우를 위한 것이다. `import static a.b.C.*;`는 따라가지 않는다
 
-## 나눠 담기와 판정
+### 나눠 담기와 판정
 
 - 코드 예산 = 단계 상한(80000자) - 고정부(시스템 제외 user 프롬프트) - 500. 파일을 순서대로 담고, 예산을 넘는 파일은 줄 범위로 나눈다. 최대 4번 호출, 넘는 파일은 `droppedFiles`
 - 코드에는 줄 번호를 붙인다(`### {저장소}/{경로} (시작-끝행)`, `   12| …`)

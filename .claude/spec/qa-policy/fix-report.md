@@ -1,4 +1,4 @@
-# 수정사항 파일 (파트별 TXT)
+## 수정사항 파일 (파트별 TXT)
 
 구현: `fixReport/facade/FixReportFacade`, `fixReport/support/FixReportAssembler`(묶음·정렬), `FailReasonSelector`(사유·근거), `FixReportWriter`(TXT), `FixReportFileName`. 조회는 `ChecklistQueryService.getFailedCells`, `DesignReviewQueryService.getFailedItems`
 
@@ -9,7 +9,7 @@ QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목
 - 형식은 TXT(UTF-8, 줄 끝 LF). 받는 쪽이 원문 그대로 읽으므로 마크다운 문법(표, `#`, 굵게)은 쓰지 않는다
 - 파트별 파일만 내려준다. ZIP은 만들지 않는다
 
-## API
+### API
 
 | 요청 | 응답 |
 |---|---|
@@ -22,7 +22,7 @@ QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목
 - `unchecked.design`: 디자인 항목 UNCHECKED 수. `unchecked.first`: 1차(분류 AUTO 항목) 셀의 UNCHECKED 수. `unchecked.second`: 2차(분류 MANUAL 항목) 셀의 UNCHECKED 수. 셀의 출처(`source`)와는 별개다
 - `Content-Disposition: attachment; filename="{fileName}"; filename*=UTF-8''{인코딩한 fileName}`. 파일 이름은 항상 ASCII라 인코딩해도 원래 이름과 같다
 
-## 내려받을 수 있는 조건 (`ready`)
+### 내려받을 수 있는 조건 (`ready`)
 
 스프린트 종료 조건(`checklist.md` 종료)과 같다. 종료 조건을 바꾸면 이 조건도 함께 바꾼다.
 
@@ -31,12 +31,12 @@ QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목
 
 `ready`를 확인한 뒤 파일을 만드는 사이에 사람이 셀을 바꾸면 바뀐 값이 파일에 들어간다. 내려받는 시점의 사본이다.
 
-## 파일 이름
+### 파일 이름
 
 - `{slug}_{PART}_fixes.txt` (예: `test-agile_SERVER_fixes.txt`, `3rd-agile_DESIGN_fixes.txt`)
 - `slug`: `sprintKey`를 소문자로 바꾸고, `[a-z0-9]`이 아닌 글자가 이어지면 `-` 하나로 바꾼 뒤 앞뒤 `-`를 지운다. 결과가 비면 `sprint-{id}`
 
-## 틀
+### 틀
 
 웹·앱·서버(WEB, APP, SERVER):
 
@@ -87,7 +87,7 @@ QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목
 | 명세 행 | 비었으면(사람이 추가한 체크 항목) 줄을 뺀다 |
 | 시안 | 디자인 항목의 `figmaNodeIds`마다 한 줄. 없으면 줄을 뺀다 |
 
-### 값이 없을 때, 여러 줄일 때 (D5)
+#### 값이 없을 때, 여러 줄일 때 (D5)
 
 - 값이 없는 줄은 통째로 뺀다
 - 값 안의 CRLF, CR은 LF로 바꾼다. 각 줄의 끝 공백을 지우고, 값 안의 빈 줄은 지운다(빈 줄은 묶음과 항목 구분에만 쓴다)
@@ -101,7 +101,7 @@ QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목
    문제: 응답 DTO에 이전·다음 공지 필드가 없다
 ```
 
-### Fail 0건 (D4)
+#### Fail 0건 (D4)
 
 200으로 제목 줄과 기준 줄만 남기고(우선순위 줄은 뺀다), 빈 줄 하나 뒤에 `수정할 항목이 없습니다.` 한 줄을 쓴다. 기준 줄이 없으면 제목 줄만 남는다.
 
@@ -112,7 +112,7 @@ Test Agile / SERVER 수정사항 0건
 수정할 항목이 없습니다.
 ```
 
-## 사유와 근거 고르기 (D2, D3)
+### 사유와 근거 고르기 (D2, D3)
 
 사유와 코드 근거는 따로 고른다. 고르는 범위의 "기록"은 그 셀(디자인 항목)의 이력 중 마지막 판정 초기화 기록보다 뒤의 기록이다.
 
@@ -137,7 +137,7 @@ Test Agile / SERVER 수정사항 0건
 | 1차 FAIL → 항목 수정(초기화) → 사람 FAIL(사유 없음) | `(사유 없음)` | 없음 |
 | 1차 FAIL → 사람 UNCHECKED → 항목 수정(초기화) → 사람 FAIL(사유 없음) | `(사유 없음)` | 없음 |
 
-## 사람이 Fail로 바꿀 때 남기는 사유 (G3)
+### 사람이 Fail로 바꿀 때 남기는 사유 (G3)
 
 - `PUT /checklist-items/{id}/cells/{part}`, `PUT /design-review-items/{id}` 요청의 선택 필드 `reason`
 - 정리: 앞뒤 공백(유니코드 공백 포함)을 지우고, 빈 문자열은 null로 본다. 정리한 값이 500자(`String.length()`, UTF-16 단위)를 넘으면 `state`와 관계없이 400 `GLOBAL_4001` (D6). 정리 함수는 `checklist/support/FailReasonPolicy` 하나를 체크 셀과 디자인 항목이 함께 쓴다

@@ -2,9 +2,9 @@
 description: 커밋, 브랜치, PR 등 Git 작업 시 적용되는 규칙
 ---
 
-# Git Convention
+## Git Convention
 
-## 커밋 메시지
+### 커밋 메시지
 
 형식: `{type}: 커밋 내용(#{이슈번호})`
 
@@ -24,7 +24,7 @@ description: 커밋, 브랜치, PR 등 Git 작업 시 적용되는 규칙
 
 예시: `feat: 북마크 기능 구현(#123)`
 
-## 제목 규칙
+### 제목 규칙
 
 이슈, PR, 커밋 메시지의 제목에 공통으로 적용한다.
 
@@ -38,20 +38,20 @@ description: 커밋, 브랜치, PR 등 Git 작업 시 적용되는 규칙
 | `refactor: 이벤트 리스너 실패 처리 및 복원력 개선 (LearningEventListener/MissionEventListener/DailyLearningRecordListener)` | `refactor: 학습 이벤트 리스너 실패 유실 방지` |
 | `hotfix: main-pages 연속 학습일(consecutiveSolvedDays) 응답 위치 이동(learning→weekly-record)` | `hotfix: 연속 학습일 응답 위치 수정` |
 
-## 표기 규칙
+### 표기 규칙
 
 - 가운데점(`·`)을 쓰지 않고 콤마(`,`)를 쓴다. (예: `이슈·라벨` → `이슈, 라벨`)
 - 긴 대시(`—`)를 쓰지 않고 짧은 대시(`-`)를 쓴다. (예: `문제 1 — 유실` → `문제 1 - 유실`)
 - 적용 범위는 이슈와 PR의 제목과 본문, 그리고 커밋 메시지다.
 - 가운데점은 나열인지 수식인지 모호하고, 긴 대시는 키보드로 바로 입력할 수 없어 손으로 고칠 때 표기가 어긋난다.
 
-## 팀 로스터
+### 팀 로스터
 
-`sukangpunch`, `Jungseokhwan`, `xunssoie`
+`xunssoie`
 
 - PR 리뷰어 자동 지정의 기준 목록이다. 인원이 바뀌면 이 목록만 고친다.
 
-## 브랜치 전략
+### 브랜치 전략
 
 - `main` → `dev` → 각자 개발 브랜치
 - main/dev에 직접 커밋하지 마라

@@ -4,14 +4,14 @@ paths:
   - "src/main/java/**/repository/**/*.java"
 ---
 
-# Repository Convention
+## Repository Convention
 
 - JPA Repository 인터페이스는 `{domain}/repository/` 패키지에 위치시켜라
 - `@Query`로 표현하기 어려운 쿼리(동적 조건, `NamedParameterJdbcTemplate` 조회)는 `repository/custom/`에 인터페이스와 `Impl`을 두고, SQL 문자열은 `repository/sql/`의 `@UtilityClass` 상수로 분리하라
 - 조회 조건에 따라 쿼리를 골라 쓰는 전략은 `repository/strategy/`에 둔다
 - JPQL 생성자 표현식(`SELECT new ...`) 프로젝션은 `dto/internal/{Name}Dto`로 받아라. 조회 결과가 API 응답 record와 모양이 같아 그대로 반환할 때만 `dto/response/`의 Response record를 대상으로 해도 된다
 
-## @Query 포맷
+### @Query 포맷
 
 - 한 줄짜리라도 항상 텍스트 블록(`"""`)으로 작성하라. `@Query("SELECT ...")` 한 줄 형태는 쓰지 마라
 - 여는 `"""`는 `@Query(` 바로 뒤에 붙인다. 네이티브 쿼리는 `@Query(value = """`로 연다
