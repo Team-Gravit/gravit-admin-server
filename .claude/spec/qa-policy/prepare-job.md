@@ -1,9 +1,9 @@
-# QA 준비 작업 (명세 로드, QA 준비)
+## QA 준비 작업 (명세 로드, QA 준비)
 
-근거: 2026-11 QA 흐름 재설계(D1~D14). 설계 문서 `03_DESIGN.md`의 셋업 작업(5-2), 확정(5-3), 자동 실행(5-4~5-6), guide(15)를 대신한다.
+근거: 2026-11 QA 흐름 재설계(D1~D14). 옛 설계 `03_DESIGN.md`(추적 해제, 커밋 `384a66e`)의 셋업 작업(5-2), 확정(5-3), 자동 실행(5-4~5-6), guide(15)를 대신한다.
 구현: `sprint/handler/SpecLoadJobHandler`, `sprint/handler/QaPrepareJobHandler`, `sprint/support/*Step`, `sprint/facade/SetupFacade`
 
-## 스프린트 상태와 전이
+### 스프린트 상태와 전이
 
 실패는 상태로 두지 않는다. 마지막 작업의 `FAILED`·`CANCELLED`와 `setupSteps[].status = FAILED`로 본다.
 
@@ -23,7 +23,7 @@
 - 스프린트당 실행 중인 작업은 종류마다 1개(`ux_job_active_per_sprint`). 시작 API는 종류와 상관없이 실행 중인 작업이 있으면 막는다
 - 명세 로드 작업이 끝나기 전에 QA 준비 작업을 등록하므로, 인덱스를 종류별로 둔다(워커는 앞 작업이 끝난 뒤 다음 작업을 집는다)
 
-## 작업과 단계
+### 작업과 단계
 
 | 작업 | 단계(`JobType`, `SetupStepKey`) | 화면 표시 |
 |---|---|---|
@@ -36,7 +36,7 @@
 - LLM을 쓰는 단계는 화면(또는 화면 × 파트) 하나가 끝날 때마다 `prepare_unit`에 남기고, 다시 실행하면 끝난 단위를 건너뛴다. `detail`에 입력 길이, 호출 수, 보낸 파일 수, 실패 여부를 남긴다
 - 작업이 끝내 실패하거나 취소되면 `JobTerminatedEvent`로 실행 중이던 단계를 `FAILED`로 바꾼다(`PrepareJobTerminatedListener`). 처리기 안의 실패는 `SetupStepRunner`가 바로 `FAILED`와 예외 메시지를 남긴다
 
-## CONNECT (연결)
+### CONNECT (연결)
 
 | 대상 | 확인 | 실패 메시지 |
 |---|---|---|
@@ -47,7 +47,7 @@
 - 다섯 곳의 결과를 모두 `sprint_connection`에 쓴 뒤, 하나라도 실패하면 단계를 실패시킨다. 5xx·타임아웃이 섞여 있으면 재시도하고, 그 밖에는 재시도하지 않는다
 - `connections[].ref`는 저장소면 `qa-baseline@{짧은 SHA}`. 1차 판정은 이 SHA의 코드를 읽는다
 
-## SPEC_COLLECT (명세 수집)
+### SPEC_COLLECT (명세 수집)
 
 - Notion 스프린트 `대상 기능` 페이지마다 속성과 본문을 읽고 `SpecPageParser`로 해석한다
   - 명세 맨 위 `항목 | 값` 표(코드에서는 기본 정보 표): 명세 상태, 파트, 라우트, 관련 API (`NotionSpecTableParser`)
@@ -58,7 +58,7 @@
 - 기준 명세(`sprint_feature`): 본문 마크다운(맨 위 표와 수정 이력 절 제외), C/B/E 행, 수정 이력 행, `changed`(이번 스프린트 행이 있음)
 - 이번 스프린트 행 중 `반영일`이 빈 행이 있으면 반영 제안을 만든다(`reflection.md`). 처리 안 한 제안이 남으면 `WAITING`
 
-## QA_PREPARE
+### QA_PREPARE
 
 | 단계 | 단위 | 하는 일 | 규칙 문서 |
 |---|---|---|---|
@@ -68,7 +68,7 @@
 
 - 단계가 끝날 때 메시지에 이번 실행 요약(항목 수, 호출 수, 실패·입력 잘림 수)을 남긴다
 
-## LLM 입력 상한 (`qa.prepare`)
+### LLM 입력 상한 (`qa.prepare`)
 
 | 키 | 기본값 | 쓰는 곳 |
 |---|---|---|
@@ -81,7 +81,7 @@
 - user 프롬프트 기준이다. 넘으면 뒤를 자르고 `(입력 길이 상한으로 이후 내용 생략)`을 붙인다
 - 3rd Agile(60개) 기준 예상 호출 약 310회, 호출당 약 80초(job 1 INTERPRET 실측 71분 49초)로 6~7시간. 첫 실행 뒤 `prepare_unit.detail`로 다시 정한다
 
-## 스냅샷
+### 스냅샷
 
 | source | 파일 | 단계 |
 |---|---|---|

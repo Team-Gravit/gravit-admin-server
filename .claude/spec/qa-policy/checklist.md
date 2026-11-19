@@ -1,8 +1,8 @@
-# 체크리스트, 셀, 종료
+## 체크리스트, 셀, 종료
 
 구현: `checklist/support/ChecklistGenerator`, `ChecklistDraftValidator`, `checklist/facade/ChecklistFacade`, `checklist/service/ChecklistCommandService`, `sprint/facade/SprintFacade`
 
-## 생성 (CHECKLIST_GENERATE, D6~D8)
+### 생성 (CHECKLIST_GENERATE, D6~D8)
 
 - 화면 1개당 LLM 1회. 입력: 기능 속성(화면 ID, 이름, 라우트, 파트, 명세 상태, 관련 API, 변경 여부), 다뤄야 할 행 번호, 기준 명세 본문, 스프린트 `변경 요약`, OpenAPI 발췌
 - 프롬프트: `prompts/checklist-draft-{system,user}.txt`
@@ -19,7 +19,7 @@
 - 검증을 3번 모두 통과하지 못하면 "초안 생성 실패" 항목 1개(MANUAL, 기능 파트 전체, 설명에 오류 500자까지)
 - 생성한 항목은 바로 확정된다(분류 검토 단계 없음). 셀은 `parts`에 있으면 UNCHECKED, 없으면 NOT_APPLICABLE
 
-## 1차, 2차 체크리스트
+### 1차, 2차 체크리스트
 
 | 조회 | 항목 |
 |---|---|
@@ -30,7 +30,7 @@
 - 화면별로 묶는다(`featureId`, `screenId`, `screenName`, `changed`, `completionRate`, `items`). 항목이 없는 화면은 빠진다
 - `completionRate`: 그 화면 셀 중 NOT_APPLICABLE을 뺀 수에서 UNCHECKED가 아닌 비율(0~100, 버림). 셀이 없으면 100
 
-## 상태별로 할 수 있는 일
+### 상태별로 할 수 있는 일
 
 | 스프린트 상태 | 항목 추가, 수정, 삭제 | 셀, 디자인 항목 변경 | 종료 |
 |---|---|---|---|
@@ -41,7 +41,7 @@
 
 상태가 맞지 않거나 실행 중인 작업이 있으면 409 `SPRINT_4092`. 디자인 항목의 행위, 설명 수정과 삭제는 MANUAL_REVIEW에서만 된다(`design-review.md`).
 
-## 항목 편집
+### 항목 편집
 
 - 사람이 추가한 항목: `origin = HUMAN`, `specRowIds` 없음, `classification = MANUAL` 고정. 스프린트 대상 기능이 아니면 404 `CHECKLIST_4042`
   - 1차(AUTO)는 LLM 판정 대상인데 추가한 항목에는 1차 판정이 다시 돌지 않으므로 2차로 둔다
@@ -54,7 +54,7 @@
 - 삭제: `DELETE /checklist-items/{id}?version=` → 204. 셀과 셀 이력도 지워진다
 - 낙관적 잠금: `version`이 다르면 409 `GLOBAL_4091`
 
-## 셀
+### 셀
 
 - 상태 UNCHECKED, PASS, FAIL, NOT_APPLICABLE. 출처 AUTO(1차 판정), MANUAL(사람)
 - 변경 요청은 UNCHECKED, PASS, FAIL만(NOT_APPLICABLE은 400 `CHECKLIST_4001`). NOT_APPLICABLE 셀은 422 `CHECKLIST_4223`
@@ -65,7 +65,7 @@
 - 바뀌면 `check_cell_history`(이전, 새 상태, 출처, 사유, 근거, 변경자, 시각). 1차 판정은 상태가 같아도 사유와 근거를 함께 이력으로 남긴다
 - `editable` = MANUAL_REVIEW이고 NOT_APPLICABLE이 아님
 
-## 진행도 (`progress[]`)
+### 진행도 (`progress[]`)
 
 | 파트 | 대상 |
 |---|---|
@@ -74,7 +74,7 @@
 
 - `total` = NOT_APPLICABLE을 뺀 수, `checked` = PASS와 FAIL 수, `pass`, `fail`. 디자인 항목의 해당 없음(사람이 고름)과 체크 셀의 해당 없음(파트 제외)을 같은 규칙으로 뺀다
 
-## 종료
+### 종료
 
 - MANUAL_REVIEW에서만(409 `SPRINT_4092`), 실행 중인 작업이 없을 때(409 `JOB_4091`), `version` 일치
 - 체크 셀과 디자인 항목의 UNCHECKED가 0이어야 한다(409 `SPRINT_4093`). FAIL, NOT_APPLICABLE은 허용

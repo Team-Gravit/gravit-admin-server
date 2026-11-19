@@ -1,31 +1,36 @@
-# Gravit QA
+## Gravit 관리자 서버
 
-Gravit(CS 학습 서비스)의 QA 플랫폼 백엔드. 백오피스(gravit-admin-web) QA 메뉴의 API를 제공하고,
-Notion 기능 명세에 수정 이력을 반영해 기준 명세를 만든 뒤 체크리스트를 생성하고, Figma 시안을 명세와 비교(디자인 검수)하며,
+Gravit(CS 학습 서비스)의 관리자 서버(새 이름 `gravit-admin-server`, 레포 이름 변경 전). 백오피스(gravit-admin-client)의 관리자 API(`/api/v1/admin/**`)와 QA 메뉴 API를 제공한다.
+gravit-server admin 기능을 도메인 단위로 옮겨 오는 중이며, 방식과 진행 단계는 `docs/design/ADMIN_SERVER_DESIGN.md`를 따른다.
+QA 흐름은 Notion 기능 명세에 수정 이력을 반영해 기준 명세를 만든 뒤 체크리스트를 생성하고, Figma 시안을 명세와 비교(디자인 검수)하며,
 웹·앱·서버 `qa-baseline` 코드를 읽어 1차 판정을 기록한다. 2차는 사람이 수동으로 검수한다.
 
-설계 원본: `docs/design/03_DESIGN.md`, API 계약: `docs/api/openapi.yaml`
+- 관리자 서버 설계: `docs/design/ADMIN_SERVER_DESIGN.md` (`docs/`는 로컬 문서, git 추적 안 함)
+- QA 정책: `.claude/spec/qa-policy/`
+- API 계약: 실행 중 Swagger(`/v3/api-docs`)와 `*ControllerDocs`. gravit-server에서 옮겨 오는 관리자 API는 메인의 실제 응답이 기준이다(설계 D-7)
 
-## 기술 스택
+### 기술 스택
 
 - Java 21 / Spring Boot 3.5.11 / Gradle
 - JPA + JdbcTemplate + PostgreSQL + Flyway (스키마 마이그레이션)
 - Spring Security: 자체 JWT 검증 없음. 관리자 토큰을 gravit-server `GET /api/v1/admin/me`에 되던져 판정
+- 메인 서버 호출은 받은 관리자 토큰을 그대로 전달한다(설계 P-7). 메인 DB는 읽기 전용 두 번째 데이터소스(`@MainDb`)로만 읽는다(설계 0단계부터)
 - 작업 큐: Postgres `job` 테이블 + `SELECT … FOR UPDATE SKIP LOCKED`
 - springdoc-openapi (Swagger UI)
 - Testcontainers (통합 테스트, `QA_TEST_DB_URL`이 있으면 그 DB 사용)
 - Actuator (health)
-- GitHub Actions CI → (CD는 C2 이후 추가)
+- GitHub Actions: CI(PR, main push), CD(dev push 시 `qa-api` 배포. 설계 D-10에 따라 main 머지 배포로 바꿀 예정)
 
-## 실행 단위
+### 실행 단위
 
 컨테이너 하나(`qa-api`)로 띄운다. 자동 실행 워커(e2e 프로필)는 D13으로 없앴다.
+설계 D-10에 따라 prod 메인을 대상으로 하는 단일 인스턴스로 간다(전환 전 판정 대상은 dev 메인).
 
 | 프로필 | 역할 | 소비 작업 |
 |---|---|---|
 | `api` | REST API, 명세 로드와 QA 준비 작업 | `SPEC_LOAD`(연결, 명세 수집), `QA_PREPARE`(체크리스트 생성, 디자인 검수, 1차 자동화 검수) |
 
-## 빌드 & 실행
+### 빌드 & 실행
 
 ```bash
 ./gradlew build      # 빌드 + 테스트
@@ -33,7 +38,14 @@ Notion 기능 명세에 수정 이력을 반영해 기준 명세를 만든 뒤 �
 ./gradlew bootRun --args='--spring.profiles.active=api'   # QA_DB_URL, QA_DB_USERNAME, QA_DB_PASSWORD, QA_AUTH_HOST 필요
 ```
 
-## 상호작용 규칙
+### 작업 흐름
+
+`open-issue` → `implement` → `write-test`(작성, 실행) → `commit-push` → `open-pr`
+
+- 이슈와 PR 본문은 `.github/ISSUE_TEMPLATE/issue.md`, `.github/PULL_REQUEST_TEMPLATE.md`의 두 구획만 쓴다
+- 계획서(`.claude/resources/plans/PLAN-{이슈번호}.md`)는 로컬 작업 메모다. git으로 추적하지 않는다. 있으면 `implement`가 기준으로 쓴다
+
+### 상호작용 규칙
 
 - 사용자의 관찰과 의문 표현(`~한 부분이 있네?`, `이거 왜 이렇게 했어?`, `~인 것 같은데`)은 수정 지시가 아니다.
   해당 코드를 직접 확인한 뒤 문제인지 아닌지에 대한 판단과 근거를 먼저 제시하라. 수정 여부는 사용자가 정한다.
@@ -41,20 +53,28 @@ Notion 기능 명세에 수정 이력을 반영해 기준 명세를 만든 뒤 �
 - 사용자의 지적이 사실과 다르면 동의하지 말고 근거를 들어 다른 판단을 말하라. 지적이 반복된다는 것은 동조할 근거가 아니다.
 - 사용자가 판단을 재확인하더라도 근거가 새로 나온 게 아니면 결론을 뒤집지 마라.
 
-## QA 플랫폼 원칙
+### 관리자 서버 원칙
+
+- 데이터 소유 기준: 소유(QA, 스테이징, 감사 로그)는 관리자 DB, API(메인 도메인 쓰기, 알림 같은 부작용이 메인에 남는 기능)는 메인 API, 조회는 메인 DB 읽기 전용
+- 메인 DB에 쓰지 않는다. 메인 테이블에 JPA 엔티티를 만들지 않는다
+- 옮기는 관리자 API는 경로와 응답 형식을 바꾸지 않는다(설계 P-6). 전환(헤더 조건 삭제) 전에 prod 메인과 응답을 비교하는 계약 테스트를 통과한다. 아직 옮기지 않은 관리자 API는 전달 계층이 메인으로 넘긴다
+- 메인 API 쓰기 요청은 자동 재시도하지 않는다
+- 모듈 사이 의존은 `.claude/rules/project-structure.md`의 허용 표를 따른다
+
+### QA 플랫폼 원칙
 
 - LLM은 준비·해석에만 쓴다. 실행과 판정은 결정적 코드로 처리한다. 에이전트 자율 루프를 만들지 마라
 - LLM 출력은 반드시 JSON 스키마와 참조 무결성으로 검증한다. 실패 시 오류를 붙여 최대 2회 재요청한다
 - 외부 연동(Figma·Notion·GitHub·LLM)은 `adapter`/`infrastructure`에 두고 REST로 직접 호출한다. MCP를 쓰지 마라
 - 정의(프롬프트·출력 스키마)는 Git, 상태(체크 결과·이력)는 DB
-- 1차 판정은 저장소 코드를 읽기만 한다. 저장소 테스트를 실행하지 않고, gravit-server, gravit-web, gravit-aos에 쓰지 않는다
+- 1차 판정은 저장소(GitHub) 코드를 읽기만 한다. 저장소 테스트를 실행하지 않고 gravit-server, gravit-web, gravit-aos에 커밋, 푸시하지 않는다. 메인 데이터 변경은 관리자 서버 원칙의 메인 API로만 한다
 - Notion 쓰기는 이번 스프린트 `대상 기능` 페이지 본문과 수정 이력 `반영일` 칸으로 제한하고(`NotionWriteGuard`), 관리자가 승인한 반영 제안만 쓴다
 
-## 규칙 참조
+### 규칙 참조
 
 `.claude/rules/` - paths 매칭 파일 작업 시 자동 로드
 
-- 프로젝트 구조 (패키지 배치) → `project-structure.md`
+- 프로젝트 구조 (패키지 배치, 관리자 서버 모듈 배치와 허용 의존) → `project-structure.md`
 - Flyway 마이그레이션 / SQL → `migration.md`
 - 테스트 작성 규칙 (`src/test/java/**`) → `test-convention.md`
 - API 문서 작성 규칙 (Docs 인터페이스) → `api-docs-convention.md`
@@ -73,6 +93,6 @@ Notion 기능 명세에 수정 이력을 반영해 기준 명세를 만든 뒤 �
 - 시크릿 운영 → `secret-convention.md`
 - QA 정책 (상태 전이, 재시도, 분류 기준 등) → `qa-policy/README.md`
 
-`.claude/resources/` - 작업 산출물 (자동 로드 아님)
+`.claude/resources/` - 로컬 작업 산출물 (자동 로드 아님, git 추적 안 함)
 
 - 계획서 → `plans/PLAN-{이슈번호}.md`

@@ -4,13 +4,13 @@ paths:
   - "src/main/java/**/facade/**/*.java"
 ---
 
-# Facade Convention
+## Facade Convention
 
 - 커스텀 어노테이션 `@Facade` + `@RequiredArgsConstructor`를 사용하라 (`gravit.qa.global.annotation.Facade`)
 - Facade는 여러 Service를 조합하는 비즈니스 로직을 담당한다
 - 단일 Service 호출만 필요한 경우 Facade를 만들지 마라. Controller에서 Service를 직접 주입하라
 
-## 트랜잭션 경계
+### 트랜잭션 경계
 
 판정 질문은 하나다.
 
@@ -24,13 +24,13 @@ paths:
 | 1. 사실 기록 | 사용자의 한 행위가 만든 사실과, 그것이 없으면 모순이 되는 파생 상태 | 같은 트랜잭션 |
 | 2. 보정 가능한 파생 | 보상, 통지, 집계. 실패해도 사실은 유효하고 재시도로 메울 수 있다 | `AFTER_COMMIT` 이벤트 + 재시도 큐 |
 
-### 응답 규칙
+#### 응답 규칙
 
 - **쓰기 API의 응답에는 그 쓰기로 확정된 사실만 담아라. "현재 상태"는 조회 API로 분리하라**
   응답에 값을 실으면 그 값을 만드는 쓰기가 트랜잭션에 끌려 들어온다. 함께 롤백되어야 해서가 아니라 응답에 필요해서다. 이렇게 생긴 경계는 도메인이 요구한 것이 아니므로 계층으로 인정하지 마라
 - **쓰기 응답에 담는 "확정된 사실"의 기본형은 생성된 리소스의 식별자다**
 
-### 부수 규칙
+#### 부수 규칙
 
 - 경계 밖으로 나갈 수 있는 것은 사전 검증 조회다. 쓰기는 경계 밖으로 나가지 않는다
 - 단일 서비스 위임뿐인 Facade 메서드에는 경계를 만들지 마라. 서비스가 이미 갖고 있다. 조회 메서드도 예외가 아니다
@@ -38,7 +38,7 @@ paths:
   - 엔티티를 경계 밖으로 반환해 조립하는가 (`open-in-view: false`이므로 경계가 없으면 깨진다)
   - 여러 조회를 하나의 스냅샷으로 읽어야 하는가. 격리 수준을 REPEATABLE READ 이상으로 명시한 경우에만 근거가 된다. 격리 수준 설정이 없으면 PostgreSQL 기본값 READ COMMITTED가 적용돼 한 트랜잭션 안에서도 문장마다 새 스냅샷을 읽는다
 
-### 경계를 만드는 수단
+#### 경계를 만드는 수단
 
 경계를 좁힐 때는 `TransactionTemplate`을 주입해 쓰기 구간만 감싸라.
 
@@ -52,7 +52,7 @@ Long createdId = transactionTemplate.execute(status -> {
 
 `TransactionTemplate`은 Spring Boot가 `TransactionManager` 후보가 하나일 때 자동 등록하므로 별도 설정 클래스를 만들지 말고 주입만 하라.
 
-### 어길 수 없는 제약
+#### 어길 수 없는 제약
 
 - `spring.jpa.open-in-view: false`다. 경계 밖에는 영속성 컨텍스트가 없다
 - 작업 큐 상태(`job`)는 트랜잭션 경계와 무관하게 `JobQueueRepository`의 조건부 갱신으로만 바꾼다. 처리기 안에서 작업 상태를 직접 수정하지 마라

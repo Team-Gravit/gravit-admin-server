@@ -4,7 +4,7 @@ paths:
   - "src/main/java/**/domain/**/*.java"
 ---
 
-# Domain (Entity) Convention
+## Domain (Entity) Convention
 
 - `@Entity` + `@Getter` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)`를 사용하라
 - 공통 필드가 필요하면 `BaseEntity`를 상속하라 (`createdAt`, `updatedAt` 자동 관리)
@@ -13,7 +13,7 @@ paths:
 
 객체 생성(정적 팩토리 + private `@Builder`)과 예외 처리 규칙은 `common.md`를 따른다.
 
-## DB 매핑
+### DB 매핑
 
 - Entity 클래스명과 테이블명이 다를 경우 `@Table(name = "...")`을 명시하라
 - 컬럼명은 `@Column(name = "snake_case", ...)`으로 명시하라 (`@Column(name = "problem_id", nullable = false)`). `@Id` 필드는 `@Column`을 생략한다
