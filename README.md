@@ -27,7 +27,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 
 ```bash
 ./gradlew build
-./gradlew test       # Testcontainers로 Postgres 기동. QA_TEST_DB_URL이 있으면 그 DB 사용
+./gradlew test       # Testcontainers로 Postgres 기동. ADMIN_TEST_DB_URL이 있으면 그 DB 사용
 ./gradlew liveTest   # 실제 Notion, Figma 호출 스모크(@Tag("live")). 변수가 없으면 건너뜀
 ```
 

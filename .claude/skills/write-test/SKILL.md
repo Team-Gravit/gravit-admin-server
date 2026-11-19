@@ -45,7 +45,7 @@ effort: high
 
 ### Phase 4: 실행
 
-1. 실행 환경: Docker(Testcontainers)나 `QA_TEST_DB_URL`이 필요하다. `QA_TEST_DB_URL`이 없고 `docker info`가 실패하면 Docker를 켜 달라고 알리고 멈춘다
+1. 실행 환경: Docker(Testcontainers)나 `ADMIN_TEST_DB_URL`이 필요하다. `ADMIN_TEST_DB_URL`이 없고 `docker info`가 실패하면 Docker를 켜 달라고 알리고 멈춘다
 2. 명령
    - 클래스, 메서드: `./gradlew test --tests "{패키지}.{테스트 클래스}"` (`#메서드`는 `.{메서드}`로)
    - 전체: `./gradlew test`. 오래 걸리므로 Bash `run_in_background`로 돌린다

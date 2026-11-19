@@ -17,13 +17,13 @@ QA 흐름은 Notion 기능 명세에 수정 이력을 반영해 기준 명세를
 - 메인 서버 호출은 받은 관리자 토큰을 그대로 전달한다(설계 P-7). 메인 DB는 읽기 전용 두 번째 데이터소스(`@MainDb`)로만 읽는다(설계 0단계부터)
 - 작업 큐: Postgres `job` 테이블 + `SELECT … FOR UPDATE SKIP LOCKED`
 - springdoc-openapi (Swagger UI)
-- Testcontainers (통합 테스트, `QA_TEST_DB_URL`이 있으면 그 DB 사용)
+- Testcontainers (통합 테스트, `ADMIN_TEST_DB_URL`이 있으면 그 DB 사용)
 - Actuator (health)
-- GitHub Actions: CI(main 대상 PR), CD(main push 시 CI를 거쳐 `qa-api` 배포. PR 머지도 main push로 들어온다. 설계 D-10)
+- GitHub Actions: CI(main 대상 PR), CD(main push 시 CI를 거쳐 `admin-api` 배포. PR 머지도 main push로 들어온다. 설계 D-10)
 
 ### 실행 단위
 
-컨테이너 하나(`qa-api`)로 띄운다. 자동 실행 워커(e2e 프로필)는 D13으로 없앴다.
+컨테이너 하나(서비스 `admin-api`, 컨테이너 `gravit-admin-server`, `docker-compose.yml`)로 띄운다. 자동 실행 워커(e2e 프로필)는 D13으로 없앴다.
 설계 D-10에 따라 prod 메인을 대상으로 하는 단일 인스턴스로 간다(전환 전 판정 대상은 dev 메인).
 
 | 프로필 | 역할 | 소비 작업 |
@@ -34,8 +34,8 @@ QA 흐름은 Notion 기능 명세에 수정 이력을 반영해 기준 명세를
 
 ```bash
 ./gradlew build      # 빌드 + 테스트
-./gradlew test       # 테스트 (Docker 또는 QA_TEST_DB_URL 필요)
-./gradlew bootRun --args='--spring.profiles.active=api'   # QA_DB_URL, QA_DB_USERNAME, QA_DB_PASSWORD, QA_AUTH_HOST 필요
+./gradlew test       # 테스트 (Docker 또는 ADMIN_TEST_DB_URL 필요)
+./gradlew bootRun --args='--spring.profiles.active=api'   # ADMIN_DB_URL, ADMIN_DB_USERNAME, ADMIN_DB_PASSWORD, MAIN_API_HOST 필요
 ```
 
 ### 작업 흐름

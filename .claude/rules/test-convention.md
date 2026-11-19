@@ -12,7 +12,7 @@ paths:
 
 - 파일명: `{Class}IntegrationTest.java`
 - 클래스 어노테이션: `@QaSpringBootTest`. 아래 구성이 함께 들어온다
-  - PostgreSQL: 환경 변수 `QA_TEST_DB_URL`(+`QA_TEST_DB_USERNAME`, `QA_TEST_DB_PASSWORD`)이 있으면 그 DB, 없으면 Testcontainers (`PostgresTestConfig`)
+  - PostgreSQL: 환경 변수 `ADMIN_TEST_DB_URL`(+`ADMIN_TEST_DB_USERNAME`, `ADMIN_TEST_DB_PASSWORD`)이 있으면 그 DB, 없으면 Testcontainers (`PostgresTestConfig`)
   - 조작 가능한 시계 `TestClock` (`@Primary`, 기준 `2026-10-16T12:00+09:00`). `advance(Duration)`으로 시간을 진행한다
   - `/admin/me` 스텁 서버 `AdminMeStubServer` (`qa.auth.host`가 스텁을 가리킨다)
   - `DatabaseClearExtension`: 매 테스트 전에 public 스키마 TRUNCATE(시퀀스 초기화), 시계·스텁·인증 캐시 초기화

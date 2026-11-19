@@ -57,4 +57,4 @@
 
 ### 배포
 
-- `docker-compose-qa.yml`의 `qa-api`에 토큰 4개를 전달한다: `FIGMA_TOKEN`, `NOTION_TOKEN`, `GITHUB_TOKEN`, `LITELLM_API_KEY`
+- `docker-compose.yml`의 `admin-api`에 토큰 4개를 전달한다: `FIGMA_TOKEN`, `NOTION_TOKEN`, `GITHUB_TOKEN`, `LITELLM_API_KEY`
