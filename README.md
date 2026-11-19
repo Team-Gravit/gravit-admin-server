@@ -1,4 +1,4 @@
-# gravit-qa-server
+# gravit-admin-server
 
 CS 학습 서비스 Gravit의 **관리자 서버**.
 백오피스 [gravit-admin-client](https://github.com/Team-Gravit/gravit-admin-client)의 관리자 API와 QA 메뉴 API를 제공하고, Notion 기능 명세, Figma 시안, 서비스 저장소 코드를 읽어 QA 체크리스트와 1차 판정을 준비합니다.
