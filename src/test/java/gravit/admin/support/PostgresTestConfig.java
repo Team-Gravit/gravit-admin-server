@@ -8,9 +8,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @TestConfiguration(proxyBeanMethods = false)
 public class PostgresTestConfig {
 
-    private static final String EXTERNAL_URL_ENV = "QA_TEST_DB_URL";
-    private static final String EXTERNAL_USERNAME_ENV = "QA_TEST_DB_USERNAME";
-    private static final String EXTERNAL_PASSWORD_ENV = "QA_TEST_DB_PASSWORD";
+    private static final String EXTERNAL_URL_ENV = "ADMIN_TEST_DB_URL";
+    private static final String EXTERNAL_USERNAME_ENV = "ADMIN_TEST_DB_USERNAME";
+    private static final String EXTERNAL_PASSWORD_ENV = "ADMIN_TEST_DB_PASSWORD";
     private static final String POSTGRES_IMAGE = "postgres:16-alpine";
 
     @Bean

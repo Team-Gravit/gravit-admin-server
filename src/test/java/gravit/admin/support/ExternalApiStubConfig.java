@@ -41,7 +41,7 @@ public class ExternalApiStubConfig {
 
     private static Path createStorageRoot() {
         try {
-            return Files.createTempDirectory("gravit-qa-storage-");
+            return Files.createTempDirectory("gravit-admin-storage-");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

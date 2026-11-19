@@ -2,9 +2,9 @@ spring:
   application:
     name: gravit-admin
   datasource:
-    url: ${QA_DB_URL}
-    username: ${QA_DB_USERNAME}
-    password: ${QA_DB_PASSWORD}
+    url: ${ADMIN_DB_URL}
+    username: ${ADMIN_DB_USERNAME}
+    password: ${ADMIN_DB_PASSWORD}
   jpa:
     open-in-view: false
     hibernate:
@@ -34,7 +34,7 @@ springdoc:
 
 qa:
   auth:
-    host: ${QA_AUTH_HOST}
+    host: ${MAIN_API_HOST}
     timeout: 5s
     cache-ttl: 300s
   job:
@@ -44,7 +44,7 @@ qa:
     reaper-interval-ms: 60000
   worker:
     enabled: true
-    id: ${QA_WORKER_ID:}
+    id: ${ADMIN_WORKER_ID:}
     job-types: []
     poll-interval-ms: 5000
     heartbeat-interval-ms: 30000

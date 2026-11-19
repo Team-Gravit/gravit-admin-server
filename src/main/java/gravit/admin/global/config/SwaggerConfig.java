@@ -21,7 +21,7 @@ public class SwaggerConfig {
                 .bearerFormat("JWT");
 
         return new OpenAPI()
-                .info(new Info().title("gravit-qa API").version("v1"))
+                .info(new Info().title("gravit-admin API").version("v1"))
                 .components(new Components().addSecuritySchemes(SECURITY_SCHEME_NAME, adminBearer))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME));
     }
