@@ -1,12 +1,13 @@
 name: CD
 
 on:
+  # PR 머지도 main push 이벤트로 들어온다. pull_request closed를 따로 걸면 같은 머지가 두 번 배포된다.
   push:
-    branches: [dev]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: cd-dev
+  group: cd-main
   cancel-in-progress: false
 
 permissions:
@@ -15,7 +16,7 @@ permissions:
 jobs:
   ci:
     name: CI
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   build:

@@ -19,7 +19,7 @@ QA 흐름은 Notion 기능 명세에 수정 이력을 반영해 기준 명세를
 - springdoc-openapi (Swagger UI)
 - Testcontainers (통합 테스트, `QA_TEST_DB_URL`이 있으면 그 DB 사용)
 - Actuator (health)
-- GitHub Actions: CI(PR, main push), CD(dev push 시 `qa-api` 배포. 설계 D-10에 따라 main 머지 배포로 바꿀 예정)
+- GitHub Actions: CI(main 대상 PR), CD(main push 시 CI를 거쳐 `qa-api` 배포. PR 머지도 main push로 들어온다. 설계 D-10)
 
 ### 실행 단위
 

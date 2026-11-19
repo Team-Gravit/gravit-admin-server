@@ -20,7 +20,7 @@ PR은 두 가지만 담는다. 닫을 이슈(`## Related Issue`), 이슈의 Plan
 1. 현재 브랜치 `{type}/{번호}-{slug}`에서 type과 이슈 번호를 얻는다. 번호가 없으면 묻는다
 2. `gh pr view --json url,state`로 이 브랜치에 열린 PR이 있으면 그 URL을 알리고 끝낸다
 3. 원격 브랜치가 없거나 `git rev-list --count @{u}..HEAD`가 0보다 크면 push되지 않은 커밋이 있다고 알리고 `commit-push`를 권한 뒤 멈춘다
-4. base는 $ARGUMENTS가 있으면 그것, 없으면 git-convention 브랜치 전략의 base(지금 `dev`)
+4. base는 $ARGUMENTS가 있으면 그것, 없으면 git-convention 브랜치 전략의 base(지금 `main`)
 
 ### Phase 1: 재료 모으기
 
