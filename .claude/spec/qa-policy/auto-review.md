@@ -1,6 +1,6 @@
 ## 1차 자동화 검수 (코드 읽기 판정)
 
-구현: `autoReview/support/CodeSelector`, `ServerCodeSelector`, `WebCodeSelector`, `AppCodeSelector`, `CodeChunker`, `AutoReviewer`, `RepoSourceReader`, `sprint/support/AutoReviewStep`
+구현: `qa/autoReview/support/CodeSelector`, `ServerCodeSelector`, `WebCodeSelector`, `AppCodeSelector`, `CodeChunker`, `AutoReviewer`, `RepoSourceReader`, `qa/sprint/support/AutoReviewStep`
 
 ### 원칙
 

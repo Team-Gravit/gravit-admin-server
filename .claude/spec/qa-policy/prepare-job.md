@@ -1,7 +1,7 @@
 ## QA 준비 작업 (명세 로드, QA 준비)
 
 근거: 2026-11 QA 흐름 재설계(D1~D14). 옛 설계 `03_DESIGN.md`(추적 해제, 커밋 `384a66e`)의 셋업 작업(5-2), 확정(5-3), 자동 실행(5-4~5-6), guide(15)를 대신한다.
-구현: `sprint/handler/SpecLoadJobHandler`, `sprint/handler/QaPrepareJobHandler`, `sprint/support/*Step`, `sprint/facade/SetupFacade`
+구현: `qa/sprint/handler/SpecLoadJobHandler`, `qa/sprint/handler/QaPrepareJobHandler`, `qa/sprint/support/*Step`, `qa/sprint/facade/SetupFacade`
 
 ### 스프린트 상태와 전이
 

@@ -7,28 +7,32 @@ paths:
 ## 프로젝트 구조
 
 ```
-src/main/java/gravit/qa/
+src/main/java/gravit/admin/
 ├── global/              # 공통 설정, 예외, 어노테이션, 유틸(시간)
-├── security/            # Spring Security 설정, /admin/me 판정 필터·캐시
-│
+├── auth/                # Spring Security 설정, /admin/me 판정 필터·캐시
 ├── job/                 # 작업 큐(등록·점유·heartbeat·재시도·회수), 작업 처리기 계약
-├── sprint/              # 스프린트, 연결 상태, 준비 단계·단위 진행, 명세 로드·QA 준비 처리기
-├── feature/             # 기능 명세 사본, 스프린트 대상 기능(기준 명세), 명세 페이지 해석
-├── reflection/          # 수정 이력 반영 제안, 승인 시 Notion 반영
-├── snapshot/            # 수집 스냅샷 (파일 저장, 행)
-├── checklist/           # 체크 항목, 체크 셀, 셀 이력, 체크리스트 생성
-├── designReview/        # 디자인 검수 항목, 이력, Figma 시안과 명세 비교
-├── autoReview/          # 1차 판정: 저장소 코드 선택, 나눠 담기, 판정 (엔티티 없음, 결과는 checklist 셀)
-├── fixReport/           # 파트별 수정사항 파일 (엔티티 없음, 읽기 전용, LLM 없음)
-└── adapter/             # 외부 연동: figma, notion, github, openapi, llm
+├── adapter/             # 외부 연동: figma, notion, github, openapi, llm
+└── qa/                  # QA 흐름
+    ├── sprint/          # 스프린트, 연결 상태, 준비 단계·단위 진행, 명세 로드·QA 준비 처리기
+    ├── feature/         # 기능 명세 사본, 스프린트 대상 기능(기준 명세), 명세 페이지 해석
+    ├── reflection/      # 수정 이력 반영 제안, 승인 시 Notion 반영
+    ├── snapshot/        # 수집 스냅샷 (파일 저장, 행)
+    ├── checklist/       # 체크 항목, 체크 셀, 셀 이력, 체크리스트 생성
+    ├── designReview/    # 디자인 검수 항목, 이력, Figma 시안과 명세 비교
+    ├── autoReview/      # 1차 판정: 저장소 코드 선택, 나눠 담기, 판정 (엔티티 없음, 결과는 checklist 셀)
+    └── fixReport/       # 파트별 수정사항 파일 (엔티티 없음, 읽기 전용, LLM 없음)
 ```
+
+관리자 기능 이관 모듈(insight, support, member, content, audit)과 adapter/gravit는 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다.
 
 자동 실행(run), 증적(evidence), 리뷰 수집(review), 페르소나(persona) 패키지는 QA 흐름 재설계(D13)로 없앴다.
 
 ### 도메인 패키지 내부 구조
 
+도메인이 하나인 모듈은 `{module}/` 바로 아래, `qa`처럼 여럿인 모듈은 `{module}/{domain}/` 아래에 둔다.
+
 ```
-{domain}/
+{module}/ 또는 {module}/{domain}/
 ├── controller/
 │   ├── {Domain}Controller.java
 │   └── docs/
@@ -53,7 +57,7 @@ src/main/java/gravit/qa/
 - `facade/` - 여러 도메인 Service를 조합할 때 (`@Facade`)
 - `support/` - 도메인 보조 로직. `job/support/`에는 작업 실행기(`JobRunner`)와 처리기 계약(`JobHandler`, `JobContext`)을 둔다
 - `scheduler/` - 스케줄
-- `handler/` - 도메인별 `JobHandler` 구현 (예: `sprint/handler/SpecLoadJobHandler`)
+- `handler/` - 도메인별 `JobHandler` 구현 (예: `qa/sprint/handler/SpecLoadJobHandler`)
 - `infrastructure/` - 외부 연동, `service/port/` 구현
 - `config/` - 도메인 전용 설정과 props
 
@@ -69,13 +73,12 @@ JPA 엔티티 없이 `repository/custom/JobQueueRepository` + `JdbcTemplate`으�
 - 재시도해도 소용없는 실패는 `NonRetryableJobException`을 던진다. 그 외 예외는 재시도 대상이다
 - 처리기는 같은 입력으로 다시 실행해도 결과가 같아야 한다. 재시도·회수 때 처리기는 처음부터 다시 불리지만, 끝난 단계(`sprint_step`)와 끝난 단위(`prepare_unit`)는 건너뛴다(`SetupStepRunner`)
 
-### 관리자 서버 모듈 배치 (설계 0단계 구조 이동부터 적용)
+### 관리자 서버 모듈 배치
 
-근거: `docs/design/ADMIN_SERVER_DESIGN.md` D-2. 구조 이동 PR 전까지는 위의 지금 배치가 맞다.
-기준 패키지는 D-1에서 `gravit.admin`으로 바꾼다(구조 이동 PR과 같은 PR).
+근거: `docs/design/ADMIN_SERVER_DESIGN.md` D-2. 아직 없는 모듈은 이관 단계에서 만든다.
 
 ```
-gravit/{기준 패키지}/
+gravit/admin/
 ├── global/      # 공통 설정, 예외, 시간, 메인 DB 읽기 전용 데이터소스(MainDbConfig, @MainDb)
 ├── job/         # 작업 큐 (플랫폼)
 ├── auth/        # 관리자 판정 필터, /admin/me 판정 캐시 (지금 security)
@@ -89,12 +92,12 @@ gravit/{기준 패키지}/
 ```
 
 - 모듈 아래 도메인이 하나면 모듈 바로 아래에 `controller/`, `service/` 등을 두고, `qa`처럼 여럿이면 `{module}/{domain}/` 아래에 둔다
-- `observability`, `incident`, `ops`는 기능이 생길 때 만든다. 빈 패키지를 미리 만들지 않는다
+- `observability`, `incident`, `ops`는 기능이 생길 때 만든다. 빈 패키지를 미리 만들지 않는다. 새 최상위 패키지는 허용 의존 표와 `ArchitectureTest`에 먼저 올린다(표에 없는 최상위 패키지는 테스트가 실패한다)
 - `adapter/`는 외부로 나가는 연동만 둔다. 예외는 `adapter/gravit`의 `/api/v1/admin/**` 전달 Controller 하나다(설계 D-3 (c))
 
 ### 모듈 사이 의존
 
-행이 열을 import할 수 있는가. O 허용, X 금지, △ 아래 조건부. 구조 이동부터 ArchUnit 테스트가 강제한다.
+행이 열을 import할 수 있는가. O 허용, X 금지, △ 아래 조건부. `src/test/java/gravit/admin/ArchitectureTest`(ArchUnit)가 강제한다. 표를 바꾸면 테스트의 표와 조건도 함께 고친다.
 
 | from \ to | global | job | auth | adapter | qa | insight | support | member | content | audit |
 |---|---|---|---|---|---|---|---|---|---|---|

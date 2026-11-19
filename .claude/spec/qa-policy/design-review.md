@@ -1,6 +1,6 @@
 ## 디자인 검수 (D9)
 
-구현: `designReview/support/DesignReviewer`, `DesignReviewValidator`, `adapter/figma/support/FigmaOutlineRenderer`, `sprint/support/DesignReviewStep`
+구현: `qa/designReview/support/DesignReviewer`, `DesignReviewValidator`, `adapter/figma/support/FigmaOutlineRenderer`, `qa/sprint/support/DesignReviewStep`
 
 ### 무엇을 비교하나
 

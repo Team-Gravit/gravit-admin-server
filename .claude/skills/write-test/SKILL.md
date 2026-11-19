@@ -29,7 +29,7 @@ effort: high
 
 ### Phase 2: Fixture 준비
 
-1. `src/test/java/gravit/qa/{domain}/fixture/`의 기존 Fixture를 Glob으로 찾아 재사용한다
+1. `src/test/java/gravit/admin/{module}/fixture/` (`qa`는 `{module}/{domain}/fixture/`)의 기존 Fixture를 Glob으로 찾아 재사용한다
 2. 없으면 [template/test-code-template.md](template/test-code-template.md)의 Fixture 절을 따라 만든다
 
 > Skip 조건: 필요한 Fixture가 모두 있거나 대상이 Entity를 쓰지 않을 때

@@ -47,7 +47,7 @@ Spring 의존 없이 입력만으로 결과가 정해지는 domain, util, suppor
 `RestApiException`을 던지는 예외 케이스는 반드시 `errorCode`까지 검증하라.
 
 ```java
-import static gravit.qa.global.exception.domain.CustomErrorCode.JOB_NOT_FOUND;
+import static gravit.admin.global.exception.domain.CustomErrorCode.JOB_NOT_FOUND;
 
 assertThatThrownBy(() -> jobCommandService.requestCancel(999L))
         .isInstanceOf(RestApiException.class)
@@ -59,7 +59,7 @@ assertThatThrownBy(() -> jobCommandService.requestCancel(999L))
 
 | 항목 | 규칙 |
 |---|---|
-| 위치 | `src/test/java/gravit/qa/{domain}/fixture/` |
+| 위치 | `src/test/java/gravit/admin/{module}/fixture/` (`qa`는 `{module}/{domain}/fixture/`) |
 | 메서드명 | 한글로 시나리오 표현 (`SprintFixture.준비_전_스프린트()`) |
 | static 팩토리 fixture | 저장하지 않은 Entity나 DTO를 반환하는 `{Domain}Fixture` 클래스 |
 | 저장형 fixture | `@TestComponent` + `@RequiredArgsConstructor`로 Repository를 주입받아 저장까지 하는 fixture |

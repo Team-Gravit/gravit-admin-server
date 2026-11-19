@@ -2,7 +2,7 @@
 description: Swagger API 문서(ControllerDocs 인터페이스) 작성 규칙
 paths:
   - "src/main/java/**/controller/docs/**"
-  - "src/main/java/gravit/qa/test/**/docs/**"
+  - "src/main/java/gravit/admin/test/**/docs/**"
 ---
 
 ## API Docs Convention
@@ -43,7 +43,7 @@ paths:
 | 500 | `"🚨 예기치 못한 예외 발생"` | 모든 API에 `GLOBAL_5001` 포함 필수 |
 
 - `@ExampleObject`의 value는 `CustomErrorCode` enum의 실제 code/message를 그대로 사용하라
-- `ErrorResponse`는 `gravit.qa.global.exception.domain.ErrorResponse`를 사용하라
+- `ErrorResponse`는 `gravit.admin.global.exception.domain.ErrorResponse`를 사용하라
 
 #### 파라미터
 
