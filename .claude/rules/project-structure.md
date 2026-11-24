@@ -11,7 +11,7 @@ src/main/java/gravit/admin/
 ├── global/              # 공통 설정, 예외, 어노테이션, 유틸(시간)
 ├── auth/                # Spring Security 설정, /admin/me 판정 필터·캐시
 ├── job/                 # 작업 큐(등록·점유·heartbeat·재시도·회수), 작업 처리기 계약
-├── adapter/             # 외부 연동: figma, notion, github, openapi, llm
+├── adapter/             # 외부 연동: figma, notion, github, openapi, llm, gravit(메인 서버 API와 /api/v1/admin/** 전달)
 └── qa/                  # QA 흐름
     ├── sprint/          # 스프린트, 연결 상태, 준비 단계·단위 진행, 명세 로드·QA 준비 처리기
     ├── feature/         # 기능 명세 사본, 스프린트 대상 기능(기준 명세), 명세 페이지 해석
@@ -23,7 +23,7 @@ src/main/java/gravit/admin/
     └── fixReport/       # 파트별 수정사항 파일 (엔티티 없음, 읽기 전용, LLM 없음)
 ```
 
-관리자 기능 이관 모듈(insight, support, member, content, audit)과 adapter/gravit는 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다.
+관리자 기능 이관 모듈(insight, support, member, content, audit)은 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다.
 
 자동 실행(run), 증적(evidence), 리뷰 수집(review), 페르소나(persona) 패키지는 QA 흐름 재설계(D13)로 없앴다.
 
@@ -93,7 +93,8 @@ gravit/admin/
 
 - 모듈 아래 도메인이 하나면 모듈 바로 아래에 `controller/`, `service/` 등을 두고, `qa`처럼 여럿이면 `{module}/{domain}/` 아래에 둔다
 - `observability`, `incident`, `ops`는 기능이 생길 때 만든다. 빈 패키지를 미리 만들지 않는다. 새 최상위 패키지는 허용 의존 표와 `ArchitectureTest`에 먼저 올린다(표에 없는 최상위 패키지는 테스트가 실패한다)
-- `adapter/`는 외부로 나가는 연동만 둔다. 예외는 `adapter/gravit`의 `/api/v1/admin/**` 전달 Controller 하나다(설계 D-3 (c))
+- `adapter/`는 외부로 나가는 연동만 둔다. 예외는 `adapter/gravit`의 `/api/v1/admin/**` 전달 Controller(`AdminForwardController`) 하나다(설계 D-3 (c)). `ArchitectureTest`가 강제한다
+- 관리자 서버가 직접 처리하는 관리자 API는 도메인 모듈에 더 구체적인 경로로 매핑한다. 같은 경로의 다른 메서드는 전달 Controller로 간다
 
 ### 모듈 사이 의존
 
@@ -129,5 +130,8 @@ gravit/admin/
 - `adapter/gravit` 클라이언트만 쓴다. 받은 관리자 토큰을 `Authorization`에 그대로 붙인다
   - 토큰은 `SecurityContextHolder` 인증 객체의 `getCredentials()`(문자열, `Bearer `를 뺀 값)에서 꺼낸다. 로그, 예외 메시지에 남기지 않는다
   - 메인이 401, 403을 주면 `global.security.AdminVerificationCacheEvictor.evict(토큰)`로 판정 캐시를 지운 뒤 응답을 넘긴다
-- 쓰기 요청(POST, PUT, PATCH, DELETE)은 자동 재시도하지 않는다. 연결 실패는 502 `GRAVIT_5021`, 응답 타임아웃은 504 `GRAVIT_5041`
+- 호스트는 판정과 같은 설정값(`qa.auth.host`)이다. 연결 2초, 응답 10초
+- 쓰기 요청(POST, PUT, PATCH, DELETE)은 자동 재시도하지 않는다. `GET /api/v1/admin/me`만 연결 실패(요청이 나가지 않은 경우)에 1회 다시 보낸다
+- 연결 실패는 502 `GRAVIT_5021`, 응답 타임아웃과 연결한 뒤의 I/O 오류는 504 `GRAVIT_5041`
+- 넘기는 요청 헤더는 `Authorization`, `Content-Type`, `Accept`만이다. 쿠키, `Host`는 넘기지 않는다
 - 메인 응답은 상태, `Content-Type`, 본문 바이트를 그대로 돌려준다. 역직렬화 후 다시 직렬화하지 않는다
