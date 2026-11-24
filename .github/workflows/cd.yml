@@ -1,12 +1,13 @@
 name: CD
 
 on:
+  # PR 머지도 main push 이벤트로 들어온다. pull_request closed를 따로 걸면 같은 머지가 두 번 배포된다.
   push:
-    branches: [dev]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: cd-dev
+  group: cd-main
   cancel-in-progress: false
 
 permissions:
@@ -15,7 +16,7 @@ permissions:
 jobs:
   ci:
     name: CI
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   build:
@@ -23,7 +24,7 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     env:
-      IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/gravit-qa-server
+      IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/gravit-admin-server
     steps:
       - name: 체크아웃
         uses: actions/checkout@v4
@@ -65,17 +66,17 @@ jobs:
         uses: actions/checkout@v4
 
       # rm 옵션을 켜면 대상 디렉터리를 비워 .env가 사라진다.
-      - name: docker-compose-qa.yml 파일 전송
+      - name: docker-compose.yml 파일 전송
         uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.APPCENTER_SERVER_IP }}
           username: ${{ secrets.APPCENTER_SERVER_USERNAME }}
           password: ${{ secrets.APPCENTER_SERVER_PASSWORD }}
           port: ${{ secrets.APPCENTER_SERVER_PORT }}
-          source: "docker-compose-qa.yml"
+          source: "docker-compose.yml"
           target: "/home/serverking/gravit/qa"
 
-      - name: qa-api 갱신
+      - name: admin-api 갱신
         uses: appleboy/ssh-action@v1.2.5
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -110,19 +111,20 @@ jobs:
             # LLM 게이트웨이(litellm-gw)와 통신할 외부 네트워크. 없으면 만들어 compose 기동이 막히지 않게 한다.
             docker network inspect llm-net >/dev/null 2>&1 || docker network create llm-net
 
-            compose -f docker-compose-qa.yml pull qa-api
-            compose -f docker-compose-qa.yml up -d --no-deps --force-recreate qa-api
+            # --remove-orphans: 이 compose 파일에 없는 서비스의 컨테이너(옛 qa-api 등)를 새 컨테이너를 만들기 전에 지워 포트 충돌을 막는다.
+            compose -f docker-compose.yml pull admin-api
+            compose -f docker-compose.yml up -d --no-deps --force-recreate --remove-orphans admin-api
 
             # 저장소가 public이라 Actions 로그에 컨테이너 로그를 남기지 않는다. 원인은 서버에서 docker logs로 본다.
             i=0
-            until [ "$(docker inspect -f '{{.State.Health.Status}}' gravit-qa-api)" = "healthy" ]; do
+            until [ "$(docker inspect -f '{{.State.Health.Status}}' gravit-admin-server)" = "healthy" ]; do
               i=$((i + 1))
               if [ "$i" -ge 36 ]; then
-                echo "qa-api가 180초 안에 healthy가 되지 않았습니다. 서버에서 docker logs gravit-qa-api로 확인하세요."
+                echo "admin-api가 180초 안에 healthy가 되지 않았습니다. 서버에서 docker logs gravit-admin-server로 확인하세요."
                 exit 1
               fi
               sleep 5
             done
-            echo "qa-api healthy"
+            echo "admin-api healthy"
 
             docker image prune -f

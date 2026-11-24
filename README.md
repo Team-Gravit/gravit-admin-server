@@ -27,7 +27,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 
 ```bash
 ./gradlew build
-./gradlew test       # Testcontainers로 Postgres 기동. QA_TEST_DB_URL이 있으면 그 DB 사용
+./gradlew test       # Testcontainers로 Postgres 기동. ADMIN_TEST_DB_URL이 있으면 그 DB 사용
 ./gradlew liveTest   # 실제 Notion, Figma 호출 스모크(@Tag("live")). 변수가 없으면 건너뜀
 ```
 
@@ -36,17 +36,18 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 ## 구조
 
 ```
-src/main/java/gravit/qa/
-├── security/         관리자 토큰 판정(/admin/me), 판정 캐시
+src/main/java/gravit/admin/
+├── auth/             관리자 토큰 판정(/admin/me), 판정 캐시
 ├── job/              작업 큐, 재시도, heartbeat 회수
-├── sprint/           스프린트, 명세 로드와 QA 준비 처리
-├── feature/          기능 명세 사본, 스프린트 대상 기능
-├── reflection/       수정 이력 반영 제안, Notion 반영
-├── snapshot/         수집 스냅샷
-├── checklist/        체크리스트 생성, 셀 판정과 이력
-├── designReview/     Figma 시안과 명세 비교
-├── autoReview/       저장소 코드를 읽는 1차 판정
-├── fixReport/        파트별 수정사항 파일
+├── qa/
+│   ├── sprint/       스프린트, 명세 로드와 QA 준비 처리
+│   ├── feature/      기능 명세 사본, 스프린트 대상 기능
+│   ├── reflection/   수정 이력 반영 제안, Notion 반영
+│   ├── snapshot/     수집 스냅샷
+│   ├── checklist/    체크리스트 생성, 셀 판정과 이력
+│   ├── designReview/ Figma 시안과 명세 비교
+│   ├── autoReview/   저장소 코드를 읽는 1차 판정
+│   └── fixReport/    파트별 수정사항 파일
 ├── adapter/          외부 연동(Figma, Notion, GitHub, OpenAPI, LLM)
 └── global/           설정, 예외, 시간
 

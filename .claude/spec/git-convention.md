@@ -53,6 +53,6 @@ description: 커밋, 브랜치, PR 등 Git 작업 시 적용되는 규칙
 
 ### 브랜치 전략
 
-- `main` → `dev` → 각자 개발 브랜치
-- main/dev에 직접 커밋하지 마라
+- `main` → 각자 개발 브랜치. 개발 브랜치는 `main`에서 분기하고 PR 대상도 `main`이다
+- main에 직접 커밋하지 마라. main push(PR 머지 포함)는 곧 배포다(CD)
 - 개발 브랜치 네이밍: `{type}/{이슈번호}-{간단한설명}` (예: `feat/123-bookmark`)

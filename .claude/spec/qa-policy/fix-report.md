@@ -1,6 +1,6 @@
 ## 수정사항 파일 (파트별 TXT)
 
-구현: `fixReport/facade/FixReportFacade`, `fixReport/support/FixReportAssembler`(묶음·정렬), `FailReasonSelector`(사유·근거), `FixReportWriter`(TXT), `FixReportFileName`. 조회는 `ChecklistQueryService.getFailedCells`, `DesignReviewQueryService.getFailedItems`
+구현: `qa/fixReport/facade/FixReportFacade`, `qa/fixReport/support/FixReportAssembler`(묶음·정렬), `FailReasonSelector`(사유·근거), `FixReportWriter`(TXT), `FixReportFileName`. 조회는 `ChecklistQueryService.getFailedCells`, `DesignReviewQueryService.getFailedItems`
 
 QA 검수(디자인 검수, 1차·2차 체크리스트)가 끝나면 Fail 항목을 디자인·웹·앱·서버 담당(사람 또는 코딩 에이전트)에게 넘긴다. 파트별로 수정에 필요한 최소 정보만 담은 TXT 파일을 서버가 만든다.
 
@@ -140,7 +140,7 @@ Test Agile / SERVER 수정사항 0건
 ### 사람이 Fail로 바꿀 때 남기는 사유 (G3)
 
 - `PUT /checklist-items/{id}/cells/{part}`, `PUT /design-review-items/{id}` 요청의 선택 필드 `reason`
-- 정리: 앞뒤 공백(유니코드 공백 포함)을 지우고, 빈 문자열은 null로 본다. 정리한 값이 500자(`String.length()`, UTF-16 단위)를 넘으면 `state`와 관계없이 400 `GLOBAL_4001` (D6). 정리 함수는 `checklist/support/FailReasonPolicy` 하나를 체크 셀과 디자인 항목이 함께 쓴다
+- 정리: 앞뒤 공백(유니코드 공백 포함)을 지우고, 빈 문자열은 null로 본다. 정리한 값이 500자(`String.length()`, UTF-16 단위)를 넘으면 `state`와 관계없이 400 `GLOBAL_4001` (D6). 정리 함수는 `qa/checklist/support/FailReasonPolicy` 하나를 체크 셀과 디자인 항목이 함께 쓴다
 - `state`가 FAIL일 때만 셀(항목)의 `reason`과 이력 `reason`에 저장한다. FAIL이 아니면 무시한다(지금처럼 null)
 - 상태가 바뀌지 않을 때 (D1, 체크 셀과 디자인 항목 같은 규칙)
   - 지금 FAIL이고 FAIL을 보냈는데 사유가 있고 지금 사유와 다르면: `source = MANUAL`, 사유를 바꾸고, 이력 FAIL → FAIL 1건. 체크 셀의 `evidence`는 지금 값을 그대로 두고 이력에도 같은 값을 남긴다

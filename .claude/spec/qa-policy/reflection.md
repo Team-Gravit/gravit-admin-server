@@ -1,6 +1,6 @@
 ## 수정 이력 반영 (D3, D4, D5)
 
-구현: `reflection/support/ReflectionProposer`, `SpecBlockIndex`, `ReflectionValidator`, `ReflectionApplier`, `reflection/facade/ReflectionFacade`
+구현: `qa/reflection/support/ReflectionProposer`, `SpecBlockIndex`, `ReflectionValidator`, `ReflectionApplier`, `qa/reflection/facade/ReflectionFacade`
 
 ### 수정 이력 표 (PM 작성)
 

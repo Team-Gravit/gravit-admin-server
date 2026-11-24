@@ -46,7 +46,7 @@ $ARGUMENTS가 비었거나 모호하면 대화로 아래를 확정한다. 여러
    gh issue create --title "{type}: {제목}" --body-file {본문 파일} --label "{라벨}" --assignee @me
    ```
 
-2. git-convention 브랜치 전략의 base(지금 `dev`)에서 `{type}/{번호}-{slug}` 브랜치를 만든다
+2. git-convention 브랜치 전략의 base(지금 `main`)에서 `{type}/{번호}-{slug}` 브랜치를 만든다
 
    ```bash
    git fetch origin {base}

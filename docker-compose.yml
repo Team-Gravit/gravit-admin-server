@@ -1,0 +1,47 @@
+services:
+  admin-api:
+    container_name: gravit-admin-server
+    image: ${DOCKER_HUB_USERNAME}/gravit-admin-server:latest
+    ports:
+      - "${ADMIN_API_PORT}:8080"
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=api
+      - ADMIN_WORKER_ID=admin-api
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75.0
+      - ADMIN_DB_URL
+      - ADMIN_DB_USERNAME
+      - ADMIN_DB_PASSWORD
+      - MAIN_API_HOST
+      - FIGMA_TOKEN
+      - NOTION_TOKEN
+      - GITHUB_TOKEN
+      - LITELLM_API_KEY
+    volumes:
+      - qa_evidence:/data/evidence
+    networks:
+      - gravit-admin
+      - llm-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "${ADMIN_API_CPUS}"
+          memory: "${ADMIN_API_MEMORY}"
+    restart: unless-stopped
+
+# 볼륨 이름을 바꾸면 빈 볼륨이 새로 생겨 저장된 파일을 잃는다. 키와 이름은 그대로 둔다.
+volumes:
+  qa_evidence:
+    name: gravit-qa-evidence
+
+networks:
+  gravit-admin:
+    driver: bridge
+  llm-net:
+    external: true
