@@ -2,6 +2,7 @@ package gravit.admin.auth.support;
 
 import gravit.admin.auth.config.AuthProps;
 import gravit.admin.auth.principal.LoginAdmin;
+import gravit.admin.global.security.AdminVerificationCacheEvictor;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -16,20 +17,24 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class AdminVerificationCache {
+public class AdminVerificationCache implements AdminVerificationCacheEvictor {
 
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final int MAX_ENTRIES = 10_000;
 
     private final Map<String, CachedAdmin> keyToAdmin = new ConcurrentHashMap<>();
 
+    private final AccessTokenExpiryReader accessTokenExpiryReader;
+
     private final Clock clock;
     private final Duration ttl;
 
     public AdminVerificationCache(
+            AccessTokenExpiryReader accessTokenExpiryReader,
             Clock clock,
             AuthProps authProps
     ) {
+        this.accessTokenExpiryReader = accessTokenExpiryReader;
         this.clock = clock;
         this.ttl = authProps.cacheTtl();
     }
@@ -54,15 +59,35 @@ public class AdminVerificationCache {
             LoginAdmin admin
     ) {
         Instant now = clock.instant();
+        Instant expiresAt = expiresAt(accessToken, now);
+        if (!expiresAt.isAfter(now)) {
+            return;
+        }
+
         evictExpired(now);
         if (keyToAdmin.size() >= MAX_ENTRIES) {
             keyToAdmin.clear();
         }
-        keyToAdmin.put(hash(accessToken), new CachedAdmin(admin, now.plus(ttl)));
+        keyToAdmin.put(hash(accessToken), new CachedAdmin(admin, expiresAt));
+    }
+
+    @Override
+    public void evict(String accessToken) {
+        keyToAdmin.remove(hash(accessToken));
     }
 
     public void clear() {
         keyToAdmin.clear();
+    }
+
+    private Instant expiresAt(
+            String accessToken,
+            Instant now
+    ) {
+        Instant ttlExpiresAt = now.plus(ttl);
+        return accessTokenExpiryReader.read(accessToken)
+                .filter(tokenExpiresAt -> tokenExpiresAt.isBefore(ttlExpiresAt))
+                .orElse(ttlExpiresAt);
     }
 
     private void evictExpired(Instant now) {
