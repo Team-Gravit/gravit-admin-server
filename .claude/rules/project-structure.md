@@ -79,7 +79,7 @@ JPA 엔티티 없이 `repository/custom/JobQueueRepository` + `JdbcTemplate`으�
 
 ```
 gravit/admin/
-├── global/      # 공통 설정, 예외, 시간, 메인 DB 읽기 전용 데이터소스(MainDbConfig, @MainDb)
+├── global/      # 공통 설정, 예외, 시간, 메인 DB 읽기 전용 데이터소스(MainDbConfig, @MainDb), 판정 캐시 삭제 입구(security)
 ├── job/         # 작업 큐 (플랫폼)
 ├── auth/        # 관리자 판정 필터, /admin/me 판정 캐시 (지금 security)
 ├── adapter/     # 외부 연동: figma, notion, github, openapi, llm, gravit(메인 서버 API와 /api/v1/admin/** 전달 Controller)
@@ -113,7 +113,7 @@ gravit/admin/
 | audit | O | O | △2 | X | X | X | X | X | X | - |
 
 - △1 `adapter → job`: `job.support.NonRetryableJobException` 하나만
-- △2 `→ auth`: `auth.principal`(LoginAdmin)과 요청 토큰 보관 타입만. 필터, 캐시는 금지
+- △2 `→ auth`: `auth.principal`(LoginAdmin)만. 필터, 캐시는 금지. 요청 토큰은 인증 객체 자격 증명 칸에서 문자열로 꺼내므로 auth 타입이 필요 없다
 - △3 `insight → support, member, content`: 각 모듈 `service/*QueryService`의 공개 조회 메서드만. 다른 모듈의 Repository, 테이블 직접 조회는 금지
 - △4 `→ audit`: `audit.service.AuditRecorder` 하나만
 
@@ -127,5 +127,7 @@ gravit/admin/
 ### 메인 API 호출
 
 - `adapter/gravit` 클라이언트만 쓴다. 받은 관리자 토큰을 `Authorization`에 그대로 붙인다
+  - 토큰은 `SecurityContextHolder` 인증 객체의 `getCredentials()`(문자열, `Bearer `를 뺀 값)에서 꺼낸다. 로그, 예외 메시지에 남기지 않는다
+  - 메인이 401, 403을 주면 `global.security.AdminVerificationCacheEvictor.evict(토큰)`로 판정 캐시를 지운 뒤 응답을 넘긴다
 - 쓰기 요청(POST, PUT, PATCH, DELETE)은 자동 재시도하지 않는다. 연결 실패는 502 `GRAVIT_5021`, 응답 타임아웃은 504 `GRAVIT_5041`
 - 메인 응답은 상태, `Content-Type`, 본문 바이트를 그대로 돌려준다. 역직렬화 후 다시 직렬화하지 않는다
