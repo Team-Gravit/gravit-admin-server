@@ -49,6 +49,10 @@ qa:
     poll-interval-ms: 5000
     heartbeat-interval-ms: 30000
   adapter:
+    gravit:
+      host: ${qa.auth.host}
+      connect-timeout: 2s
+      read-timeout: 10s
     retry:
       max-retries: 3
       backoff-base: 1s
