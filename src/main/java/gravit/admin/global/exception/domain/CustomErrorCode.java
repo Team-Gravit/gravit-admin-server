@@ -8,6 +8,7 @@ import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -29,6 +30,10 @@ public enum CustomErrorCode implements ErrorCode {
     TOKEN_INVALID(UNAUTHORIZED, "AUTH_4012", "토큰이 만료되었거나 유효하지 않습니다."),
     NOT_ADMIN(FORBIDDEN, "AUTH_4031", "Gravit 관리자만 사용할 수 있습니다."),
     AUTH_SERVER_UNAVAILABLE(SERVICE_UNAVAILABLE, "AUTH_5031", "인증 서버에서 관리자 여부를 확인할 수 없습니다."),
+
+    // Gravit
+    MAIN_SERVER_UNREACHABLE(BAD_GATEWAY, "GRAVIT_5021", "메인 서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요."),
+    MAIN_SERVER_RESULT_UNKNOWN(GATEWAY_TIMEOUT, "GRAVIT_5041", "메인 서버 응답이 늦어 처리 여부를 확인하지 못했습니다. 목록을 다시 불러와 확인하세요."),
 
     // Job
     JOB_NOT_FOUND(NOT_FOUND, "JOB_4041", "존재하지 않는 작업입니다."),

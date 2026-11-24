@@ -11,12 +11,19 @@ import java.time.Duration;
 public final class HttpRequestFactories {
 
     public static JdkClientHttpRequestFactory jdk(Duration timeout) {
+        return jdk(timeout, timeout);
+    }
+
+    public static JdkClientHttpRequestFactory jdk(
+            Duration connectTimeout,
+            Duration readTimeout
+    ) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(timeout)
+                .connectTimeout(connectTimeout)
                 .build();
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
-        requestFactory.setReadTimeout(timeout);
+        requestFactory.setReadTimeout(readTimeout);
         return requestFactory;
     }
 }
