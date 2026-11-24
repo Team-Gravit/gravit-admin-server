@@ -35,6 +35,7 @@ public class ExternalApiStubConfig {
             registry.add("qa.adapter.figma.base-url", externalApiStubServer::baseUrl);
             registry.add("qa.adapter.openapi.url", () -> externalApiStubServer.baseUrl() + OPENAPI_PATH);
             registry.add("qa.adapter.llm.base-url", externalApiStubServer::baseUrl);
+            registry.add("qa.adapter.gravit.host", externalApiStubServer::baseUrl);
             registry.add("qa.storage.root", storageRoot::toString);
         };
     }

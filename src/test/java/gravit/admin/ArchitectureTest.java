@@ -6,11 +6,13 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
+import gravit.admin.adapter.gravit.controller.AdminForwardController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -98,6 +100,21 @@ class ArchitectureTest {
         }
     }
 
+    @Nested
+    @DisplayName("adapter 모듈의 수신 지점을 검사할 때")
+    class AdapterInbound {
+
+        @Test
+        void 수신_Controller는_gravit의_전달_Controller_하나뿐이다() {
+            // when & then
+            classes().that().resideInAPackage(modulePackage("adapter"))
+                    .and().areMetaAnnotatedWith(Controller.class)
+                    .should().haveFullyQualifiedName(AdminForwardController.class.getName())
+                    .because("adapter는 외부로 나가는 연동만 두고, 예외는 /api/v1/admin/** 전달 Controller 하나다(설계 4-3 #7)")
+                    .check(CLASSES);
+        }
+    }
+
     private static ArchRule ruleFor(String from, String to, String cell) {
         DescribedPredicate<JavaClass> target = resideInAPackage(modulePackage(to));
         if (!cell.equals("X")) {
@@ -114,7 +131,7 @@ class ArchitectureTest {
             // △1 adapter → job: NonRetryableJobException 하나만
             case "△1" -> DescribedPredicate.describe("job.support.NonRetryableJobException",
                     c -> c.getName().equals(BASE_PACKAGE + ".job.support.NonRetryableJobException"));
-            // △2 → auth: auth.principal(LoginAdmin)과 요청 토큰 보관 타입만. 필터, 캐시는 금지
+            // △2 → auth: auth.principal(LoginAdmin)만. 필터, 캐시는 금지
             case "△2" -> resideInAPackage(BASE_PACKAGE + ".auth.principal..");
             // △3 insight → support, member, content: 각 모듈 service/*QueryService만
             case "△3" -> DescribedPredicate.describe(to + ".service.*QueryService",

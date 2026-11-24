@@ -8,6 +8,8 @@ qa:
       - SPEC_LOAD
       - QA_PREPARE
   adapter:
+    gravit:
+      read-timeout: 300ms
     github:
       token: test-github-token
       timeout: 300ms
