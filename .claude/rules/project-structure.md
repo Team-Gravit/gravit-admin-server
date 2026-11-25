@@ -12,6 +12,7 @@ src/main/java/gravit/admin/
 ├── auth/                # Spring Security 설정, /admin/me 판정 필터·캐시
 ├── job/                 # 작업 큐(등록·점유·heartbeat·재시도·회수), 작업 처리기 계약
 ├── adapter/             # 외부 연동: figma, notion, github, openapi, llm, gravit(메인 서버 API와 /api/v1/admin/** 전달)
+├── insight/             # 대시보드 요약, 일별, 월별 활성 회원 (DASH-01~03, 메인 DB 조회)
 └── qa/                  # QA 흐름
     ├── sprint/          # 스프린트, 연결 상태, 준비 단계·단위 진행, 명세 로드·QA 준비 처리기
     ├── feature/         # 기능 명세 사본, 스프린트 대상 기능(기준 명세), 명세 페이지 해석
@@ -23,7 +24,7 @@ src/main/java/gravit/admin/
     └── fixReport/       # 파트별 수정사항 파일 (엔티티 없음, 읽기 전용, LLM 없음)
 ```
 
-관리자 기능 이관 모듈(insight, support, member, content, audit)은 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다.
+관리자 기능 이관 모듈(support, member, content, audit)은 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다. insight는 1단계에서 만들었다.
 
 자동 실행(run), 증적(evidence), 리뷰 수집(review), 페르소나(persona) 패키지는 QA 흐름 재설계(D13)로 없앴다.
 
@@ -122,6 +123,8 @@ gravit/admin/
 
 - 조회 방식 기능만 메인 DB를 읽는다. 구현은 `{module}/repository/custom/*RepositoryImpl`에서 `@MainDb JdbcTemplate`만 쓰고 SQL 상수는 `repository/sql/`에 둔다
 - 메인 테이블에 JPA 엔티티를 만들지 않는다. 메인 DB에 쓰지 않는다(읽기 전용 계정, `default_transaction_read_only`)
+- 주입은 필드에 `@MainDb`를 붙이고 `@RequiredArgsConstructor`를 쓴다(`lombok.config`의 `copyableAnnotations`가 생성자 파라미터로 옮긴다). 한정자가 빠지면 관리자 DB JdbcTemplate이 조용히 주입되므로, Repository 통합 테스트는 메인 픽스처 스키마에만 있는 테이블을 읽어 이를 잡는다
+- 서비스 조회 메서드에 `@Transactional`을 붙이지 않는다. 트랜잭션 관리자는 관리자 DB(JPA) 것이라 메인 DB 조회에는 효과가 없고 관리자 DB 연결만 하나 더 잡는다
 - `@MainDb` 데이터소스와 JdbcTemplate은 기본 후보가 아니다(`defaultCandidate = false`). 한정자 없는 `DataSource`, `JdbcTemplate`, JPA, Flyway는 관리자 DB다. 연결은 읽기 전용(자동 커밋 쓰기 포함)이고 health에 넣지 않는다
 - 이관 모듈(insight, support, member, content, audit)의 `@Validated` 파라미터 검증과 파라미터 타입 오류는 `AdminApiExceptionHandler`가 메인 형식으로 답한다(설계 9-4). 그 밖의 오류와 QA API는 `GlobalExceptionHandler`다
 - 메인의 숨은 동작(soft delete 조건, 정렬, 페이지 크기 20, `page < 1` 오류)을 그대로 재현한다. 목록은 설계 6-1
