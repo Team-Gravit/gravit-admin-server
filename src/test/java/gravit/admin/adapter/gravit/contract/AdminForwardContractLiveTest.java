@@ -23,9 +23,9 @@ class AdminForwardContractLiveTest {
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = {
             "/api/v1/admin/me",
-            "/api/v1/admin/notices",
-            "/api/v1/admin/notices?page=0",
-            "/api/v1/admin/notices/999999999"
+            "/api/v1/admin/chapters",
+            "/api/v1/admin/chapters?page=0",
+            "/api/v1/admin/chapters/999999999"
     })
     void 전달되는_GET은_메인_응답과_같다(String pathAndQuery) {
         // given

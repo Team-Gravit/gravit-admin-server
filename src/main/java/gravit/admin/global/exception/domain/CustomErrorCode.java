@@ -32,6 +32,9 @@ public enum CustomErrorCode implements ErrorCode {
     // Report
     REPORT_NOT_FOUND(NOT_FOUND, "REPORT_4041", "신고 조회에 실패하였습니다."),
 
+    // Notice
+    NOTICE_NOT_FOUND(NOT_FOUND, "NOTICE_4041", "존재하지 않는 공지사항입니다."),
+
     // Auth
     TOKEN_MISSING(UNAUTHORIZED, "AUTH_4011", "관리자 인증이 필요합니다."),
     TOKEN_INVALID(UNAUTHORIZED, "AUTH_4012", "토큰이 만료되었거나 유효하지 않습니다."),
