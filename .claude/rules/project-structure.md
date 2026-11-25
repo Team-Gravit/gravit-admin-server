@@ -14,7 +14,8 @@ src/main/java/gravit/admin/
 ├── adapter/             # 외부 연동: figma, notion, github, openapi, llm, gravit(메인 서버 API와 /api/v1/admin/** 전달)
 ├── insight/             # 대시보드 요약, 일별, 월별 활성 회원 (DASH-01~03, 메인 DB 조회)
 ├── support/             # 운영자가 처리하는 사용자 제출물
-│   └── report/          # 신고 목록, 상세 (RPT-01~02, 메인 DB 조회. RPT-03 상태 변경은 메인에 남아 전달 계층이 넘긴다)
+│   ├── report/          # 신고 목록, 상세 (RPT-01~02, 메인 DB 조회. RPT-03 상태 변경은 메인에 남아 전달 계층이 넘긴다)
+│   └── notice/          # 공지 목록, 상세 (NTC-01~02, 메인 DB 조회. 지운 공지 제외. NTC-03~05 쓰기는 메인에 남는다)
 └── qa/                  # QA 흐름
     ├── sprint/          # 스프린트, 연결 상태, 준비 단계·단위 진행, 명세 로드·QA 준비 처리기
     ├── feature/         # 기능 명세 사본, 스프린트 대상 기능(기준 명세), 명세 페이지 해석
@@ -26,7 +27,7 @@ src/main/java/gravit/admin/
     └── fixReport/       # 파트별 수정사항 파일 (엔티티 없음, 읽기 전용, LLM 없음)
 ```
 
-관리자 기능 이관 모듈(member, content, audit)은 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다. insight는 1단계, support는 2단계(report)에서 만들었고 notice, inquiry는 3단계에서 support 아래에 더한다.
+관리자 기능 이관 모듈(member, content, audit)은 아래 "관리자 서버 모듈 배치"를 따라 해당 단계에서 만든다. insight는 1단계, support는 2단계(report)에서 만들었고 3단계에서 notice를 더했다. inquiry도 3단계에서 support 아래에 더한다.
 
 관리자 API 목록은 공통 페이지 규칙을 쓴다. `global/util/AdminPages`(크기 20, 1부터, `page < 1`이면 400 `PAGE_4001`)로 offset을 구하고 `global/dto/response/PageResponse.of`로 메인과 같은 페이지 응답을 만든다.
 
