@@ -3,7 +3,6 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  # main push(PR 머지 포함)의 테스트는 CD(cd.yml)가 이 워크플로를 호출해 돌린다.
   workflow_call:
 
 jobs:

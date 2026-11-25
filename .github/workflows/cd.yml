@@ -1,7 +1,6 @@
 name: CD
 
 on:
-  # PR 머지도 main push 이벤트로 들어온다. pull_request closed를 따로 걸면 같은 머지가 두 번 배포된다.
   push:
     branches: [main]
   workflow_dispatch:
@@ -26,7 +25,6 @@ jobs:
     env:
       IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/gravit-admin-server
     steps:
-      # 빈 시크릿이 그대로 주입되면 새 컨테이너가 뜨지 못해 관리자 서버가 멈춘다. 이미지를 만들기 전에 멈춘다.
       - name: 배포 시크릿 확인
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -60,14 +58,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 이 job은 비밀값이 든 설정으로 빌드하므로 Gradle 캐시에 아무것도 쓰지 않는다.
       - name: Gradle 설정
         uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: true
 
-      # gravit-server CD와 같은 방식: 시크릿을 application.yml 값에 넣어 이미지에 굽는다.
-      # 저장소의 application.yml은 그대로다(로컬 실행은 환경 변수 자리를 쓴다).
       - name: application.yml 시크릿 주입
         uses: microsoft/variable-substitution@v1
         with:
@@ -84,7 +79,6 @@ jobs:
           qa.adapter.figma.token: ${{ secrets.FIGMA_TOKEN }}
           qa.adapter.llm.api-key: ${{ secrets.LITELLM_API_KEY }}
 
-      # 테스트는 같은 실행의 ci job이 돌았다.
       - name: JAR 빌드
         run: |
           chmod +x ./gradlew
@@ -96,7 +90,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      # latest는 compose가 쓰고, 커밋 SHA 태그는 되돌리기용이다.
       - name: 도커 이미지 빌드
         run: docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
 
@@ -111,7 +104,6 @@ jobs:
       - name: 체크아웃
         uses: actions/checkout@v4
 
-      # rm 옵션을 켜면 대상 디렉터리를 비워 .env가 사라진다.
       - name: docker-compose.yml 파일 전송
         uses: appleboy/scp-action@v1.0.0
         with:
@@ -139,16 +131,12 @@ jobs:
             set -eu
             cd /home/serverking/gravit/qa
 
-            # gravit-server CD와 같은 방식: .env에는 compose 보간 값(비밀 아님)만 배포마다 새로 쓴다.
-            # 비밀값은 이미지 안 application.yml에 있다. 서버에서 손으로 고친 .env는 다음 배포에서 덮어써진다.
             umask 077
             echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" > .env
             echo "ADMIN_API_PORT=$ADMIN_API_PORT" >> .env
             echo "ADMIN_API_CPUS=$ADMIN_API_CPUS" >> .env
             echo "ADMIN_API_MEMORY=$ADMIN_API_MEMORY" >> .env
 
-            # deploy.resources.limits는 Compose v2에서만 적용된다.
-            # 서버 로그인 셸(zsh)은 따옴표 없는 변수를 단어 분리하지 않아, 명령을 변수 대신 함수로 고른다.
             if docker compose version >/dev/null 2>&1; then
               compose() { docker compose "$@"; }
             elif docker-compose version --short 2>/dev/null | grep -q '^2'; then
@@ -158,14 +146,11 @@ jobs:
               exit 1
             fi
 
-            # LLM 게이트웨이(litellm-gw)와 통신할 외부 네트워크. 없으면 만들어 compose 기동이 막히지 않게 한다.
             docker network inspect llm-net >/dev/null 2>&1 || docker network create llm-net
 
-            # --remove-orphans: 이 compose 파일에 없는 서비스의 컨테이너(옛 qa-api 등)를 새 컨테이너를 만들기 전에 지워 포트 충돌을 막는다.
             compose -f docker-compose.yml pull admin-api
             compose -f docker-compose.yml up -d --no-deps --force-recreate --remove-orphans admin-api
 
-            # 저장소가 public이라 Actions 로그에 컨테이너 로그를 남기지 않는다. 원인은 서버에서 docker logs로 본다.
             i=0
             until [ "$(docker inspect -f '{{.State.Health.Status}}' gravit-admin-server)" = "healthy" ]; do
               i=$((i + 1))
