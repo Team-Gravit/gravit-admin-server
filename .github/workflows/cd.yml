@@ -118,6 +118,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.5
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
           ADMIN_API_PORT: ${{ secrets.ADMIN_API_PORT }}
           ADMIN_API_CPUS: ${{ secrets.ADMIN_API_CPUS }}
           ADMIN_API_MEMORY: ${{ secrets.ADMIN_API_MEMORY }}
@@ -126,7 +127,7 @@ jobs:
           username: ${{ secrets.APPCENTER_SERVER_USERNAME }}
           password: ${{ secrets.APPCENTER_SERVER_PASSWORD }}
           port: ${{ secrets.APPCENTER_SERVER_PORT }}
-          envs: DOCKER_HUB_USERNAME,ADMIN_API_PORT,ADMIN_API_CPUS,ADMIN_API_MEMORY
+          envs: DOCKER_HUB_USERNAME,DOCKER_HUB_PASSWORD,ADMIN_API_PORT,ADMIN_API_CPUS,ADMIN_API_MEMORY
           script: |
             set -eu
             cd /home/serverking/gravit/qa
@@ -148,7 +149,17 @@ jobs:
 
             docker network inspect llm-net >/dev/null 2>&1 || docker network create llm-net
 
-            compose -f docker-compose.yml pull admin-api
+            login_dir=$(mktemp -d)
+            trap 'rm -rf "$login_dir"' EXIT
+            if [ -d "$HOME/.docker/cli-plugins" ]; then
+              ln -s "$HOME/.docker/cli-plugins" "$login_dir/cli-plugins"
+            fi
+            (
+              export DOCKER_CONFIG="$login_dir"
+              echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin >/dev/null
+              compose -f docker-compose.yml pull admin-api
+            )
+            rm -rf "$login_dir"
             compose -f docker-compose.yml up -d --no-deps --force-recreate --remove-orphans admin-api
 
             i=0
