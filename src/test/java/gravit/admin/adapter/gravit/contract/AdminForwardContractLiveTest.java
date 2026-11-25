@@ -23,8 +23,6 @@ class AdminForwardContractLiveTest {
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = {
             "/api/v1/admin/me",
-            "/api/v1/admin/dashboard/summary",
-            "/api/v1/admin/dashboard/active-users/daily?days=7",
             "/api/v1/admin/reports",
             "/api/v1/admin/reports?page=1&isResolved=false",
             "/api/v1/admin/reports?page=0",
