@@ -59,6 +59,7 @@ gravit-server CD와 같은 이름을 쓴다. 저장소 시크릿 또는 이 저�
 |---|---|
 | `QA_LIVE_NOTION_SPRINT_DB_ID`, `QA_LIVE_NOTION_SPEC_DB_ID` | Notion 스프린트 DB, 기능 명세 DB ID (+ `NOTION_TOKEN`) |
 | `QA_LIVE_FIGMA_FILE_KEY` | QA 페이지가 있는 Figma 파일 키 (+ `FIGMA_TOKEN`) |
+| `ADMIN_CONTRACT_MAIN_BASE`, `ADMIN_CONTRACT_ADMIN_BASE`, `ADMIN_CONTRACT_TOKEN` | 계약 테스트(`@ContractLiveTest`): prod 메인 주소, 관리자 서버 주소, prod 관리자 access 토큰. GET만 보낸다. 토큰은 셸에만 두고 파일에 저장하지 않는다 |
 
 ### 규칙
 

@@ -15,7 +15,7 @@ paths:
   - PostgreSQL: 환경 변수 `ADMIN_TEST_DB_URL`(+`ADMIN_TEST_DB_USERNAME`, `ADMIN_TEST_DB_PASSWORD`)이 있으면 그 DB, 없으면 Testcontainers (`PostgresTestConfig`)
   - 조작 가능한 시계 `TestClock` (`@Primary`, 기준 `2026-10-16T12:00+09:00`). `advance(Duration)`으로 시간을 진행한다
   - `/admin/me` 스텁 서버 `AdminMeStubServer` (`qa.auth.host`가 스텁을 가리킨다)
-  - `DatabaseClearExtension`: 매 테스트 전에 public 스키마 TRUNCATE(시퀀스 초기화), 시계·스텁·인증 캐시 초기화
+  - `DatabaseClearExtension`: 매 테스트 전에 public 스키마와 메인 DB 픽스처 스키마(`maindb`) TRUNCATE(시퀀스 초기화), 시계·스텁·인증 캐시 초기화
   - `test` 프로필: 스케줄러 비활성(`qa.worker.enabled=false`). 작업은 테스트에서 `JobRunner.runNext()`로 직접 실행한다
 - 의존성 주입: `@Autowired`
 - Controller 테스트: `@AutoConfigureMockMvc` + `MockMvc`. 인증은 `Authorization: Bearer …` 헤더를 넣고 스텁 응답으로 제어한다
@@ -29,6 +29,27 @@ paths:
   - 모든 작업 유형(`SPEC_LOAD`, `QA_PREPARE`)에 실제 처리기가 있으므로 스텁 처리기 빈을 따로 등록하지 마라. 유형당 처리기가 둘이 되어 `JobRunner` 기동이 실패한다
   - 별도 설정 클래스는 `@Import`로 등록한다(`@Nested`와 함께 쓰면 중첩 `@TestConfiguration`이 컨텍스트를 분리시킨다)
 - 실패 주입·호출 검증 용도에 한해 `@MockitoBean`, `@MockitoSpyBean`을 쓴다
+
+### 메인 DB 픽스처
+
+메인 DB 조회(`@MainDb JdbcTemplate`) 테스트는 테스트 DB 안의 별도 스키마 `maindb`를 메인 DB로 쓴다(`TestDatabase`). 관리자 DB는 같은 DB의 public이다.
+
+- DDL: `src/test/resources/maindb/`에 메인 테이블 하나당 파일 하나(`V{순서}__{테이블}.sql`). JVM마다 한 번 `maindb`를 지우고 다시 만든 뒤 파일 이름 순서로 실행한다. 다른 테이블을 참조하면 참조되는 파일의 순서 번호를 앞에 둔다
+- 파일 머리 주석에 출처 메인 마이그레이션 파일과 gravit-server 커밋을 적는다(`-- 출처: gravit-server {커밋} V1__init.sql, V42__...sql`). 메인에서 그 테이블을 바꾸는 마이그레이션이 생기면 이 파일과 머리말을 함께 고친다
+- 조회에 쓰는 컬럼, 제약, 기본값만 옮겨도 된다. 인덱스와 확장(`pg_trgm`)은 조회 결과에 영향이 없으면 뺀다
+- 행: 테스트에서 `MainDbFixtureWriter`로 넣는다. 앱의 `@MainDb` 연결은 읽기 전용이라 쓰지 못한다. 행은 `DatabaseClearExtension`이 테스트마다 비운다
+- 도메인 테스트에서 메인 테이블을 만들거나 지우지 않는다. 구조는 DDL 파일로만 정한다(예외: 픽스처 방식 자체를 검사하는 `support/MainDbFixtureIntegrationTest`)
+
+### 계약 테스트 (prod 응답 비교)
+
+전환(헤더 조건 삭제) 조건인 prod 메인과 관리자 서버의 GET 응답 비교다(설계 9-2).
+
+- 클래스에 `@ContractLiveTest`를 붙인다(`@Tag("live")`, 환경 변수 셋 중 하나라도 없으면 건너뜀). 이름은 `{Domain}ContractLiveTest`, 위치는 대상 모듈의 `contract/` 패키지
+- `LiveContractClient`로 같은 경로를 메인과 관리자 서버에 보내고(관리자 서버에는 `X-Admin-Route: local`), `ContractComparator.compare` 결과가 비었는지 본다. 비교는 상태와 JSON 트리이며 키 순서만 무시한다
+- GET만 보낸다. 쓰기 API는 응답 바이트 전달 테스트(전달 계층 통합 테스트)로 확인한다
+- 요청 표: 기본값, 첫 페이지, 마지막 페이지 다음, 필터 조합, 없는 ID(404), 잘못된 파라미터(400), `page=0`
+- 실행: `ADMIN_CONTRACT_MAIN_BASE`, `ADMIN_CONTRACT_ADMIN_BASE`, `ADMIN_CONTRACT_TOKEN`을 셸에 두고 `./gradlew liveTest --tests '{클래스}'`. 변수 없이 클래스를 골라 돌리면 Gradle이 "No tests found"로 실패한다(클래스 단위로 건너뛰어서다)
+- 허용 차이는 설계 9-4 "의도한 차이"뿐이다. 그 경우는 요청 표에서 빼고 이유를 테스트 주석에 적는다
 
 ### 순수 JUnit 테스트
 
