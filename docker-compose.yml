@@ -9,14 +9,6 @@ services:
       - SPRING_PROFILES_ACTIVE=api
       - ADMIN_WORKER_ID=admin-api
       - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75.0
-      - ADMIN_DB_URL
-      - ADMIN_DB_USERNAME
-      - ADMIN_DB_PASSWORD
-      - MAIN_API_HOST
-      - FIGMA_TOKEN
-      - NOTION_TOKEN
-      - GITHUB_TOKEN
-      - LITELLM_API_KEY
     volumes:
       - qa_evidence:/data/evidence
     networks:
