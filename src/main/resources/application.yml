@@ -5,6 +5,8 @@ spring:
     url: ${ADMIN_DB_URL}
     username: ${ADMIN_DB_USERNAME}
     password: ${ADMIN_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
   jpa:
     open-in-view: false
     hibernate:
@@ -37,6 +39,12 @@ qa:
     host: ${MAIN_API_HOST}
     timeout: 5s
     cache-ttl: 300s
+  main-db:
+    url: ${MAIN_DB_URL}
+    username: ${MAIN_DB_USERNAME}
+    password: ${MAIN_DB_PASSWORD}
+    maximum-pool-size: 3
+    minimum-idle: 1
   job:
     max-attempts: 4
     backoff-base: 2m

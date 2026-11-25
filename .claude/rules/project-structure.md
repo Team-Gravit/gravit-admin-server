@@ -122,6 +122,8 @@ gravit/admin/
 
 - 조회 방식 기능만 메인 DB를 읽는다. 구현은 `{module}/repository/custom/*RepositoryImpl`에서 `@MainDb JdbcTemplate`만 쓰고 SQL 상수는 `repository/sql/`에 둔다
 - 메인 테이블에 JPA 엔티티를 만들지 않는다. 메인 DB에 쓰지 않는다(읽기 전용 계정, `default_transaction_read_only`)
+- `@MainDb` 데이터소스와 JdbcTemplate은 기본 후보가 아니다(`defaultCandidate = false`). 한정자 없는 `DataSource`, `JdbcTemplate`, JPA, Flyway는 관리자 DB다. 연결은 읽기 전용(자동 커밋 쓰기 포함)이고 health에 넣지 않는다
+- 이관 모듈(insight, support, member, content, audit)의 `@Validated` 파라미터 검증과 파라미터 타입 오류는 `AdminApiExceptionHandler`가 메인 형식으로 답한다(설계 9-4). 그 밖의 오류와 QA API는 `GlobalExceptionHandler`다
 - 메인의 숨은 동작(soft delete 조건, 정렬, 페이지 크기 20, `page < 1` 오류)을 그대로 재현한다. 목록은 설계 6-1
 - 테스트 픽스처 DDL 파일 머리에 출처 메인 마이그레이션 파일과 커밋을 적는다
 

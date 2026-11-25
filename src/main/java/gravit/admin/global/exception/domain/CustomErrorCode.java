@@ -25,6 +25,9 @@ public enum CustomErrorCode implements ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "GLOBAL_5001", "예기치 못한 예외가 발생했습니다."),
     DATABASE_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "GLOBAL_5002", "데이터베이스 처리 중 오류가 발생했습니다."),
 
+    // Admin API (메인 오류 형식)
+    ADMIN_API_INVALID_PARAMS(BAD_REQUEST, "GLOBAL_4001", "유효성 검사 실패"),
+
     // Auth
     TOKEN_MISSING(UNAUTHORIZED, "AUTH_4011", "관리자 인증이 필요합니다."),
     TOKEN_INVALID(UNAUTHORIZED, "AUTH_4012", "토큰이 만료되었거나 유효하지 않습니다."),

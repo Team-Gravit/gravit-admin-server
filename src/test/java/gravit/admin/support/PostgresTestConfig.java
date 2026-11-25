@@ -3,7 +3,11 @@ package gravit.admin.support;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistrar;
+import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class PostgresTestConfig {
@@ -12,23 +16,34 @@ public class PostgresTestConfig {
     private static final String EXTERNAL_USERNAME_ENV = "ADMIN_TEST_DB_USERNAME";
     private static final String EXTERNAL_PASSWORD_ENV = "ADMIN_TEST_DB_PASSWORD";
     private static final String POSTGRES_IMAGE = "postgres:16-alpine";
+    private static final List<String> DATASOURCE_PREFIXES = List.of("spring.datasource", "qa.main-db");
 
     @Bean
     public DynamicPropertyRegistrar postgresProperties() {
         return registry -> {
             String externalUrl = System.getenv(EXTERNAL_URL_ENV);
             if (externalUrl != null && !externalUrl.isBlank()) {
-                registry.add("spring.datasource.url", () -> externalUrl);
-                registry.add("spring.datasource.username", () -> envOrDefault(EXTERNAL_USERNAME_ENV, "postgres"));
-                registry.add("spring.datasource.password", () -> envOrDefault(EXTERNAL_PASSWORD_ENV, ""));
+                addDataSource(registry, () -> externalUrl, () -> envOrDefault(EXTERNAL_USERNAME_ENV, "postgres"),
+                        () -> envOrDefault(EXTERNAL_PASSWORD_ENV, ""));
                 return;
             }
 
             PostgreSQLContainer<?> container = ContainerHolder.POSTGRES;
-            registry.add("spring.datasource.url", container::getJdbcUrl);
-            registry.add("spring.datasource.username", container::getUsername);
-            registry.add("spring.datasource.password", container::getPassword);
+            addDataSource(registry, container::getJdbcUrl, container::getUsername, container::getPassword);
         };
+    }
+
+    private static void addDataSource(
+            DynamicPropertyRegistry registry,
+            Supplier<Object> url,
+            Supplier<Object> username,
+            Supplier<Object> password
+    ) {
+        for (String prefix : DATASOURCE_PREFIXES) {
+            registry.add(prefix + ".url", url);
+            registry.add(prefix + ".username", username);
+            registry.add(prefix + ".password", password);
+        }
     }
 
     private static String envOrDefault(

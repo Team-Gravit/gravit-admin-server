@@ -23,7 +23,7 @@ description: 관리자 서버(gravit-admin) 환경 변수·시크릿 목록과 �
 | `qa.adapter.notion.token` | `NOTION_TOKEN` | Notion Integration | gravit-chatbot과 같은 Integration. QA 상위 페이지에 연결해야 읽힌다 |
 | `qa.adapter.github.token` | `GH_READ_TOKEN` | Fine-grained PAT (public read-only) | GitHub는 `GITHUB_`로 시작하는 시크릿 이름을 받지 않는다. 호출 한도용(인증 시 시간당 5,000회) |
 | `qa.adapter.llm.api-key` | `LITELLM_API_KEY` | litellm-gw 키 | 게이트웨이에 DB가 없어 virtual key를 만들 수 없으므로 기존 master key를 쓴다 (설계 7-3, 02_PREP_GUIDE 1-4) |
-| (PR-B에서 추가) `qa.main-db.url`, `username`, `password` | `MAIN_DB_URL`, `MAIN_DB_USERNAME`, `MAIN_DB_PASSWORD` | 메인 prod DB 읽기 전용 연결(계정 `gravit_admin_ro`) | 시크릿은 등록돼 있다. 설정 키가 생기는 PR-B에서 주입 줄과 확인 목록에 넣는다 |
+| `qa.main-db.url`, `username`, `password` | `MAIN_DB_URL`, `MAIN_DB_USERNAME`, `MAIN_DB_PASSWORD` | 메인 prod DB 읽기 전용 연결(계정 `gravit_admin_ro`, `@MainDb`) | 값이 없으면 기동하지 않는다. 연결은 첫 조회 때 맺고 health에는 넣지 않아, 계정이 아직 없어도 기동과 배포는 된다 |
 
 `ADMIN_WORKER_ID`(`job.locked_by`)는 compose에서 `admin-api`로 고정한다. `GRAVIT_TEST_API_KEY`(gravit-server 테스트 API 서비스 키)는 #15 처리 후 위 표와 같은 방식으로 추가한다.
 외부 연동 base-url과 DB ID 같은 비밀이 아닌 값은 `application.yml`의 `qa.adapter.*`에 둔다.

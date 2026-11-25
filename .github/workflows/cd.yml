@@ -35,13 +35,16 @@ jobs:
           ADMIN_DB_USERNAME: ${{ secrets.ADMIN_DB_USERNAME }}
           ADMIN_DB_PASSWORD: ${{ secrets.ADMIN_DB_PASSWORD }}
           MAIN_API_HOST: ${{ secrets.MAIN_API_HOST }}
+          MAIN_DB_URL: ${{ secrets.MAIN_DB_URL }}
+          MAIN_DB_USERNAME: ${{ secrets.MAIN_DB_USERNAME }}
+          MAIN_DB_PASSWORD: ${{ secrets.MAIN_DB_PASSWORD }}
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           GH_READ_TOKEN: ${{ secrets.GH_READ_TOKEN }}
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
         run: |
           missing=""
-          for key in DOCKER_HUB_USERNAME ADMIN_API_PORT ADMIN_API_CPUS ADMIN_API_MEMORY ADMIN_DB_URL ADMIN_DB_USERNAME ADMIN_DB_PASSWORD MAIN_API_HOST FIGMA_TOKEN NOTION_TOKEN GH_READ_TOKEN LITELLM_API_KEY; do
+          for key in DOCKER_HUB_USERNAME ADMIN_API_PORT ADMIN_API_CPUS ADMIN_API_MEMORY ADMIN_DB_URL ADMIN_DB_USERNAME ADMIN_DB_PASSWORD MAIN_API_HOST MAIN_DB_URL MAIN_DB_USERNAME MAIN_DB_PASSWORD FIGMA_TOKEN NOTION_TOKEN GH_READ_TOKEN LITELLM_API_KEY; do
             [ -n "$(printenv "$key")" ] || missing="$missing $key"
           done
           if [ -n "$missing" ]; then
@@ -73,6 +76,10 @@ jobs:
           spring.datasource.password: ${{ secrets.ADMIN_DB_PASSWORD }}
 
           qa.auth.host: ${{ secrets.MAIN_API_HOST }}
+
+          qa.main-db.url: ${{ secrets.MAIN_DB_URL }}
+          qa.main-db.username: ${{ secrets.MAIN_DB_USERNAME }}
+          qa.main-db.password: ${{ secrets.MAIN_DB_PASSWORD }}
 
           qa.adapter.github.token: ${{ secrets.GH_READ_TOKEN }}
           qa.adapter.notion.token: ${{ secrets.NOTION_TOKEN }}

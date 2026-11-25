@@ -35,7 +35,7 @@ QA 흐름은 Notion 기능 명세에 수정 이력을 반영해 기준 명세를
 ```bash
 ./gradlew build      # 빌드 + 테스트
 ./gradlew test       # 테스트 (Docker 또는 ADMIN_TEST_DB_URL 필요)
-./gradlew bootRun --args='--spring.profiles.active=api'   # ADMIN_DB_URL, ADMIN_DB_USERNAME, ADMIN_DB_PASSWORD, MAIN_API_HOST 필요
+./gradlew bootRun --args='--spring.profiles.active=api'   # ADMIN_DB_URL, ADMIN_DB_USERNAME, ADMIN_DB_PASSWORD, MAIN_API_HOST, MAIN_DB_URL, MAIN_DB_USERNAME, MAIN_DB_PASSWORD 필요
 ```
 
 ### 작업 흐름
