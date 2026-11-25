@@ -9,7 +9,7 @@ description: 관리자 서버(gravit-admin) 환경 변수·시크릿 목록과 �
 - 빌드 때: CD(`cd.yml` "application.yml 시크릿 주입")가 `microsoft/variable-substitution`으로 시크릿을 `src/main/resources/application.yml` 값에 넣고 그대로 jar, 이미지를 만든다. 저장소의 `application.yml`은 바뀌지 않는다(로컬 실행은 `${ADMIN_DB_URL}` 같은 환경 변수 자리를 그대로 쓴다)
 - 배포 때: CD가 서버 `.env`(`/home/serverking/gravit/qa`)를 compose 보간 값 4개(비밀 아님)로만 새로 쓴다. 서버에서 `.env`를 손으로 고쳐도 다음 배포에서 덮어써진다
 - 값을 바꾸려면 GitHub Secrets를 고치고 다시 배포한다(이미지를 다시 만든다)
-- 이미지에 비밀값이 들어가므로 Docker Hub 저장소 `gravit-admin-server`는 비공개여야 한다. CD는 저장소가 공개로 조회되면 이미지를 올리기 전에 멈춘다. 비밀값을 바꿔도 예전 SHA 태그 이미지에는 예전 값이 남는다
+- 이미지에 비밀값이 들어가므로 Docker Hub 저장소 `gravit-admin-server`는 비공개여야 한다. 공개 범위는 Docker Hub 저장소 설정에서 관리한다. 비밀값을 바꿔도 예전 SHA 태그 이미지에는 예전 값이 남는다
 - 비밀값을 다루는 빌드 job은 Gradle 캐시에 쓰지 않는다(`cache-read-only: true`)
 - CD는 이미지를 만들기 전에 필요한 시크릿이 비었는지 보고, 비었으면 키 이름만 출력하고 멈춘다
 
